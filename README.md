@@ -1,3 +1,2 @@
-# SmartContractWeaknessAnalyzer
+# graph generate for GNN
 
-graph generate for 
