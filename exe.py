@@ -1,7 +1,4 @@
-import embedding
-from parsing import SolidityToAST
-from parsing import AstToCFG
+from parsing import Generator
 
 filename = 'if_code'
-ast = SolidityToAST.solidityToAst(filename)
-AstToCFG(ast)
+Generator.execute(filename)

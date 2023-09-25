@@ -1,3 +1,4 @@
+
 # 함수별 cfg
 class CFG:
     def __init__(self):
@@ -11,17 +12,17 @@ class CFG:
         return self.nodes[len(self.nodes) - 1]
 
     def cfg_to_dot(self):
-        dot_code = ""
+        viz_code = ""
 
         for node in self.nodes:
-            if node.node_name == "Condition" or node.node_name == "LoopCondition":
-                dot_code += f'{node.node_id} [label = "{node.node_name}{" ".join(f"{feature}" for feature in node.node_feature)}" ];\n'
-                dot_code += node.node_to_dot()
-            elif node.node_feature:
-                dot_code += f'{node.node_id} [label = "{node.node_name}{" ".join(f"{feature}" for feature in node.node_feature)}"];\n'
-                dot_code += node.node_to_dot()
+            if node.name == "Condition" or node.name == "LoopCondition":
+                viz_code += f'{node.id} [label = "{node.name}{" ".join(f"{feature}" for feature in node.feature)}" ];\n'
+                viz_code += node.node_to_dot()
+            elif node.feature:
+                viz_code += f'{node.id} [label = "{node.name}{" ".join(f"{feature}" for feature in node.feature)}"];\n'
+                viz_code += node.node_to_dot()
             else:
-                dot_code += f"{node.node_id} [label = {node.node_name}];\n"
-                dot_code += node.node_to_dot()
+                viz_code += f"{node.id} [label = {node.name}];\n"
+                viz_code += node.node_to_dot()
 
-        return dot_code
+        return viz_code
