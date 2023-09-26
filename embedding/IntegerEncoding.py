@@ -21,8 +21,8 @@ for word in solidity_file:
     encoded_sentences.append(encoded_sentence)
 
 
-target_file_path = r'C:\Users\wlfkr\Desktop\encoded_solidity.txt'
-result = open(target_file_path + '.txt', 'w+')
+target_file_path = r'C:\Users\wlfkr\Desktop\encoded_solidity.result'
+result = open(target_file_path + '.result', 'w+')
 result.write(str(encoded_sentences))
 result.close()
 print('done')

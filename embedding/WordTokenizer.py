@@ -40,7 +40,7 @@ for weakness in weakness_name:
 vocabulary_sorted = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)
 
 target_file_path = r'C:\Users\wlfkr\Desktop' + '\\' + 'integer_encoding'
-integer_encoding = open(target_file_path + '.txt', 'w+')
+integer_encoding = open(target_file_path + '.result', 'w+')
 integer_encoding.write(str(vocabulary_sorted))
 integer_encoding.close()
 

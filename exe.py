@@ -1,4 +1,4 @@
-from parsing import Generator
+from parsing.Generator import generate
 
 filename = 'if_code'
-Generator.execute(filename)
+generate(filename)
