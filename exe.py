@@ -1,4 +1,4 @@
-from parsing.Generator import generate
+from Graph_generator_for_GNN.parsing.Generator import generate
 
-filename = 'if_code'
+filename = 'first_test'
 generate(filename)

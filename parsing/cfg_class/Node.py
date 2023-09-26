@@ -14,8 +14,8 @@ class Node:
         viz_code = ""
 
         if len(self.successors) > 1:
-            viz_code += f'{self.id} -> {self.successors[0]} [label = "true" labelStyle = "fill: #77f; font-weight: bold;"];\n'
-            viz_code += f'{self.id} -> {self.successors[1]} [label = "false" labelStyle = "fill: #f77; font-weight: bold;"];\n'
+            viz_code += f'{self.id} -> {self.successors[0]} [label = "true", fontcolor="blue"];\n'
+            viz_code += f'{self.id} -> {self.successors[1]} [label = "false", fontcolor="red"];\n'
         elif len(self.successors) == 1:
             viz_code += f'{self.id} -> {self.successors[0]};\n'
 

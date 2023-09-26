@@ -25,4 +25,8 @@ class CFG:
                 viz_code += f"{node.id} [label = {node.name}];\n"
                 viz_code += node.node_to_dot()
 
+                #시작적인 복잡함 해결
+                if node.name == "WhileEnd" or node.name == "ForEnd":
+                    viz_code += f'{{rank=same; {str(node.id)}; {str(node.id - 1)}}}\n'
+
         return viz_code

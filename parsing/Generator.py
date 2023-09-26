@@ -1,5 +1,5 @@
 import os
-from Graph_generator_for_GNN.parsing.SolidityToAST import solidity_to_ast
+from .SolidityToAST import solidity_to_ast
 from Graph_generator_for_GNN.parsing.AstToCFG import ast_to_cfg
 import graphviz
 
