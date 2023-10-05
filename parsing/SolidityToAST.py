@@ -6,7 +6,6 @@ import re
 def solidity_to_ast(filename):
     abstract_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ solidityToAST start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
-
     try:
         solidity_file = open('./origin_sol_code/' + filename + '.txt', 'r')
         solidity_code = solidity_file.read()
