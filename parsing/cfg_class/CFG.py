@@ -16,7 +16,7 @@ class CFG:
 
         for node in self.nodes:
             if node.name == "Condition" or node.name == "LoopCondition":
-                viz_code += f'{node.id} [label = "{node.name}{" ".join(f"{feature}" for feature in node.feature)}" ];\n'
+                viz_code += f'{node.id} [label = "{node.name}{" ".join(f"{feature}" for feature in node.feature)}", shape = diamond];\n'
                 viz_code += node.node_to_dot()
             elif node.feature:
                 viz_code += f'{node.id} [label = "{node.name}{" ".join(f"{feature}" for feature in node.feature)}"];\n'

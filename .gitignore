@@ -1,3 +1,5 @@
 result/
+embedding/embedding_code/
 .idea/
 *.txt
+*.sol

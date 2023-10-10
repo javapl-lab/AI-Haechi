@@ -2,14 +2,32 @@ from Graph_generator_for_GNN.parsing.cfg_class.CFG import CFG
 from Graph_generator_for_GNN.parsing.cfg_class.Node import Node
 from Graph_generator_for_GNN.parsing.cfg_class.GlobalCounter import GlobalCounter
 
-global_counter = GlobalCounter()
+node_counter = GlobalCounter()
+function_counter = GlobalCounter()
+variable_counter = GlobalCounter()
+function_dict = dict()
+variable_dict = dict()
+
 cfg_list = []
+
 
 # 노드를 받아와 해당 노드에서 feature를 문자열로 리턴
 def create_feature(node):
+    node_type = node['type']
+    if node_type == 'FunctionCall':
+        if node['expression']['type'] == 'Identifier':
+            name = node['expression']['name']
+            # 함수명 딕셔너리에 해당 키가 없으면 생성
+            if name not in function_dict:
+                function_dict[name] = str(function_counter.counter())
+
     feature = ""
+    operator = ""
     for key, value in node.items():
         if isinstance(value, dict):
+            # 변수 할당부분 특징 추가용
+            if key == 'right':
+                feature += operator + ' '
             feature += create_feature(value)
         elif isinstance(value, list):
             for item in value:
@@ -18,11 +36,20 @@ def create_feature(node):
 
         elif isinstance(value, str):
             if key == 'name':
-                feature += value + ' '
-            if key == 'operator':
-                feature += value + ' '
+                if value in function_dict:
+                    feature += "function" + function_dict[value] + ' '
+                elif value in variable_dict:
+                    feature += "variable" + variable_dict[value] + ' '
+                elif value not in variable_dict:
+                    variable_dict[value] = str(variable_counter.counter())
+                    feature += "variable" + variable_dict[value] + ' '
             if key == 'number':
-                feature += value + ' '
+                if '.' in value:
+                    feature += 'decimal' + ' '
+                else:
+                    feature += 'integer' + ' '
+            if key == 'operator':
+                operator = value
             if key == 'visibility':
                 feature += value + ' '
         elif isinstance(value, bool):
@@ -48,7 +75,7 @@ def conditional_statement_processing(node, cfg=None):
             if last_node.name == 'Expression':
                 traverse(children['expression'], cfg, cfg.last_node())
             else:
-                node_id = global_counter.counter()
+                node_id = node_counter.counter()
                 expression_node = Node("Expression", node_id)
 
                 (cfg.last_node()).add_successor(expression_node.id)
@@ -57,37 +84,44 @@ def conditional_statement_processing(node, cfg=None):
                 traverse(children['expression'], cfg, expression_node)
 
         # 리턴 처리부
-        elif node_type == 'Identifier':
-            node_id = global_counter.counter()
+        elif node_type == 'Identifier' or node_type == 'BinaryOperation' or node_type == 'NumberLiteral':
+            node_id = node_counter.counter()
             return_node = Node("return", node_id)
-            return_node.feature.append(" " + children['name'])
+            return_node.feature.append(" " + create_feature(node))
             cfg.last_node().add_successor(return_node.id)
             cfg.add_node(return_node)
 
         # If문 처리부
         elif node_type == 'IfStatement':
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             condition_node = Node("Condition", node_id)
             (cfg.last_node()).add_successor(condition_node.id)
             cfg.add_node(condition_node)
             traverse(children['condition'], cfg, condition_node)
 
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             ifEnd_node = Node("IfEnd", node_id)
 
             traverse(children['TrueBody'], cfg, condition_node)
             if cfg.last_node().name != "return":
                 cfg.last_node().add_successor(ifEnd_node.id)
 
-            traverse(children['FalseBody'], cfg, condition_node)
-            if cfg.last_node().name != "return":
-                cfg.last_node().add_successor(ifEnd_node.id)
+            if not children['FalseBody']:
+                condition_node.add_successor(ifEnd_node.id)
+            else:
+                traverse(children['FalseBody'], cfg, condition_node)
+                if not children['FalseBody']:
+                    condition_node.add_successor(ifEnd_node.id)
+                else:
+                    traverse(children['FalseBody'], cfg, condition_node)
+                    if cfg.last_node().name != "return":
+                        cfg.last_node().add_successor(ifEnd_node.id)
 
             cfg.add_node(ifEnd_node)
 
         # While문 처리부
         elif node_type == 'WhileStatement':
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             loopCondition_node = Node("LoopCondition", node_id)
             (cfg.last_node()).add_successor(loopCondition_node.id)
             cfg.add_node(loopCondition_node)
@@ -96,20 +130,20 @@ def conditional_statement_processing(node, cfg=None):
             traverse(children['body'], cfg, loopCondition_node)
             (cfg.last_node()).add_successor(loopCondition_node.id)
 
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             whileEnd_node = Node("WhileEnd", node_id)
             cfg.add_node(whileEnd_node)
             loopCondition_node.add_successor(whileEnd_node.id)
 
         # For문 처리부
         elif node_type == 'ForStatement':
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             VariableDeclaration_node = Node("Variable Declaration", node_id)
             (cfg.last_node()).add_successor(VariableDeclaration_node.id)
             cfg.add_node(VariableDeclaration_node)
             traverse(children['initExpression'], cfg, VariableDeclaration_node)
 
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             loopCondition_node = Node("LoopCondition", node_id)
             (cfg.last_node()).add_successor(loopCondition_node.id)
             cfg.add_node(loopCondition_node)
@@ -117,14 +151,14 @@ def conditional_statement_processing(node, cfg=None):
 
             traverse(children['body'], cfg, loopCondition_node)
 
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             loopExpression_node = Node("LoopExpression", node_id)
             cfg.last_node().add_successor(loopExpression_node.id)
             cfg.add_node(loopExpression_node)
             traverse(children['loopExpression']['expression'], cfg, loopExpression_node)
             (cfg.last_node()).add_successor(loopCondition_node.id)
 
-            node_id = global_counter.counter()
+            node_id = node_counter.counter()
             forEnd_node = Node("ForEnd", node_id)
             cfg.add_node(forEnd_node)
             loopCondition_node.add_successor(forEnd_node.id)
@@ -132,7 +166,7 @@ def conditional_statement_processing(node, cfg=None):
 
 def create_cfg(node):
     cfg = CFG()
-    node_id = global_counter.counter()
+    node_id = node_counter.counter()
     function_node = Node("Function", node_id)
     cfg.add_node(function_node)
 
@@ -141,7 +175,7 @@ def create_cfg(node):
     traverse(node['body'], cfg, function_node)
 
     # FunctionEnd
-    node_id = global_counter.counter()
+    node_id = node_counter.counter()
     functionend_node = Node("FunctionEnd", node_id)
     for node in cfg.nodes:
         if not node.successors:
@@ -153,14 +187,17 @@ def create_cfg(node):
 def traverse(node, cfg=None, prev_node=None):
     node_type = node.get('type')
 
-    if not node_type:
+    if not node_type:   
         return
     # 함수선언부
     elif node_type == 'FunctionDefinition':
-        cfg_list.append(create_cfg(node))
+        if isinstance(node['body'], list):
+            pass
+        else:
+            cfg_list.append(create_cfg(node))
         return
     # 함수 외부에서 선언 및 선언 & 정의 / 이벤트 정의 등은 사용하지 않음
-    elif node_type == 'StateVariableDeclaration' or node_type == 'UsingForDeclaration' or node_type == 'InheritanceSpecifier' or node_type == 'EventDefinition':
+    elif node_type == 'StateVariableDeclaration' or node_type == 'UsingForDeclaration' or node_type == 'InheritanceSpecifier' or node_type == 'EventDefinition'  or node_type == 'PragmaDirective' or node_type == 'ModifierDefinition':
         return
     # 연산자
     elif node_type == 'BinaryOperation' or node_type == 'UnaryOperation':
@@ -175,11 +212,10 @@ def traverse(node, cfg=None, prev_node=None):
         prev_node.feature.append("\n" + create_feature(node))
         return
 
-
     if node_type == 'SourceUnit' or node_type == 'ContractDefinition':
         current_node = None
     else:
-        node_id = global_counter.counter()
+        node_id = node_counter.counter()
         current_node = Node(node_type, node_id)
         cfg.add_node(current_node)
 
@@ -202,7 +238,7 @@ def traverse(node, cfg=None, prev_node=None):
 ##################################################################################################################
 
 def ast_to_cfg(ast):
-    print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ast_to_cfg start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
+    print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ AstToCFG start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
     traverse(ast)
 
     viz_code = 'digraph G {\nnode[shape=box, style=rounded, fontname="Sans"]\n'
@@ -211,5 +247,5 @@ def ast_to_cfg(ast):
         viz_code += cfg.cfg_to_dot()
     viz_code += '}'
 
-    print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ast_to_cfg done ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
+    print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ AstToCFG done ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
     return viz_code

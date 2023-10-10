@@ -5,27 +5,31 @@ from Graph_generator_for_GNN.parsing.VizToDGL import viz_to_dgl
 import graphviz
 
 
-def generate(file_name):
-    abstract_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
+def generate(file_path, file_name):
+    abs_result_path = os.path.abspath('../')
+    if 'Graph_generator_for_GNN' in abs_result_path:
+        abs_result_path = os.path.abspath('../result/')
+    else:
+        abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
+
     try:
-        if not os.path.exists(abstract_result_path):
-            os.mkdir(abstract_result_path)
+        if not os.path.exists(abs_result_path):
+            os.mkdir(abs_result_path)
             print()
-            os.mkdir(os.path.join(abstract_result_path, 'ast'))
-            os.mkdir(os.path.join(abstract_result_path, 'cfg'))
-            os.mkdir(os.path.join(abstract_result_path, 'cfg_img'))
-            os.mkdir(os.path.join(abstract_result_path, 'preprocessed_ast'))
+            os.mkdir(os.path.join(abs_result_path, 'ast'))
+            os.mkdir(os.path.join(abs_result_path, 'cfg'))
+            os.mkdir(os.path.join(abs_result_path, 'preprocessed_ast'))
     except Exception as e:
         print(str(e))
 
-    ast = solidity_to_ast(file_name)
+    ast = solidity_to_ast(file_path)
     viz_code = ast_to_cfg(ast)
     viz_to_dgl(viz_code)
-    abstract_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
+    abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
 
+    file_name = file_name.split('.')[0]
     cfg = graphviz.Source(viz_code)
     cfg.format = 'png'
-    cfg.render(filename=os.path.join(abstract_result_path, 'cfg_img/', file_name))
-    cfg.view()
+    cfg.render(filename=os.path.join(abs_result_path, 'cfg/', file_name))
 
-    return
+    return viz_code
