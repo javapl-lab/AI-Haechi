@@ -11,10 +11,14 @@ weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether fro
 vocabulary = {}
 preprocessed_sentences = []
 
+success_count = 0
+fail_count = 0
+success_file = []
+fail_file = []
+
 for weakness in tmp:
     folder_path = abs_code_path + '\\' + weakness
     solidity_list = os.listdir(folder_path)
-    count = 0
     result = []
     for file_name in solidity_list:
         file_path = folder_path + '\\' + file_name
@@ -28,12 +32,21 @@ for weakness in tmp:
                     vocabulary[word] = 0
                 vocabulary[word] += 1
             preprocessed_sentences.append(result)
-            count += 1
-            print('now...', count)
+            success_count += 1
+            success_file.append(file_name)
+            print('now...', file_name)
 
         except Exception as e:
+            fail_count += 1
+            fail_file.append(file_name)
             print(file_name + ": " + str(e))
+
             continue
+
+        print('success:', success_count)
+        print('success:', success_file)
+        print('fail:', fail_count)
+        print('fail:', fail_file)
 #
 vocabulary_sorted = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)
 

@@ -6,9 +6,10 @@ contract MyContract {
         number = 9;
         number = 2;
         sosu = 1.2;
-        for (uint i = 1; i <= n; i++) {
+        for (uint i = 1; i <= 5; i++) {
                 number += i;
             }
         number = 1;
+        return number;
     }
 }

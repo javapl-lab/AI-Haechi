@@ -13,21 +13,81 @@ cfg_list = []
 
 # 노드를 받아와 해당 노드에서 feature를 문자열로 리턴
 def create_feature(node):
-    node_type = node['type']
-    if node_type == 'FunctionCall':
+    feature = ""
+
+    if isinstance(node, list):
+        for item in node:
+            if isinstance(item, dict):
+                feature += create_feature(item)
+        return feature
+
+    # 함수 표현
+    elif node['type'] == 'FunctionCall':
         if node['expression']['type'] == 'Identifier':
             name = node['expression']['name']
+
             # 함수명 딕셔너리에 해당 키가 없으면 생성
             if name not in function_dict:
                 function_dict[name] = str(function_counter.counter())
 
-    feature = ""
-    operator = ""
+            feature += "function" + function_dict[name] + '('
+            length = len(node['arguments'])
+            for i in range(length):
+                if i == 0:
+                    feature += create_feature(node['arguments'][i])
+                else:
+                    feature += ', ' + create_feature(node['arguments'][i])
+            feature += ')'
+            return feature
+
+        # variable.push() 이런애들
+        elif node['expression']['type'] == 'MemberAccess':
+            feature = create_feature(node['expression']) + '('
+            length = len(node['arguments'])
+            for i in range(length):
+                if i == 0:
+                    feature += create_feature(node['arguments'][i])
+                else:
+                    feature += ', ' + create_feature(node['arguments'][i])
+            feature += ')'
+            return feature
+
+    # 점
+    elif node['type'] == 'MemberAccess':
+        feature = create_feature(node['expression']) + '.' + node['memberName']
+        return feature
+
+    # for문에서 변수 선언부의 자료형 제거 + '=' 생성
+    elif node['type'] == 'VariableDeclarationStatement':
+        # ast구조에 예외가 없다는 가정하에 진행한 내용
+        feature = create_feature(node['variables']) + " = " + create_feature(node['initialValue'])
+        return feature
+    elif node['type'] == 'ElementaryTypeName':
+        return feature
+
+    # 중위식 표현
+    elif node['type'] == 'BinaryOperation':
+        feature = create_feature(node['left']) + ' ' + node['operator'] + ' ' + create_feature(node['right'])
+        return feature
+
+    # 증감 연산자 표현
+    elif node['type'] == 'UnaryOperation':
+        #전위
+        if node['isPrefix'] == True:
+            feature = node['operator'] + create_feature(node['subExpression'])
+        #후위
+        elif node['isPrefix'] == False:
+            feature =  create_feature(node['subExpression']) + node['operator']
+        return feature
+
+    # 배열
+    elif node['type'] == 'IndexAccess':
+        feature = create_feature(node['base']) + '[' + create_feature(node['index']) + ']'
+        return feature
+
+
     for key, value in node.items():
         if isinstance(value, dict):
-            # 변수 할당부분 특징 추가용
-            if key == 'right':
-                feature += operator + ' '
             feature += create_feature(value)
         elif isinstance(value, list):
             for item in value:
@@ -36,29 +96,28 @@ def create_feature(node):
 
         elif isinstance(value, str):
             if key == 'name':
-                if value in function_dict:
-                    feature += "function" + function_dict[value] + ' '
-                elif value in variable_dict:
-                    feature += "variable" + variable_dict[value] + ' '
+                if value in variable_dict:
+                    feature += "variable" + variable_dict[value]
                 elif value not in variable_dict:
                     variable_dict[value] = str(variable_counter.counter())
-                    feature += "variable" + variable_dict[value] + ' '
-            if key == 'number':
+                    feature += "variable" + variable_dict[value]
+            elif key == 'number':
                 if '.' in value:
-                    feature += 'decimal' + ' '
+                    feature += 'decimal'
                 else:
-                    feature += 'integer' + ' '
-            if key == 'operator':
-                operator = value
-            if key == 'visibility':
-                feature += value + ' '
+                    feature += 'integer'
+            elif key == 'operator':
+                feature += value
+            elif key == 'visibility':
+                feature += value
+            elif key == 'value':
+                feature += 'string'
         elif isinstance(value, bool):
-            if key == 'isPrefix':
-                if value:
-                    feature += "Perfix Operator"
-                else:
-                    feature += "Postfix Operator"
-            '''다른 추가적인 정보 담아야함'''
+            if key == 'value':
+                if value == True:
+                    feature += 'True'
+                elif value == False:
+                    feature += 'False'
 
     return feature
 
@@ -66,8 +125,16 @@ def create_feature(node):
 def conditional_statement_processing(node, cfg=None):
     # Block 하위 리스트 순회
     for children in node['statements']:
-        node_type = children['type']
 
+        # return; 처리
+        if children == None:
+            return_node = Node("return", node_counter.counter())
+            cfg.last_node().add_successor(return_node.id)
+            cfg.add_node(return_node)
+            return
+
+
+        node_type = children['type']
         last_node = cfg.last_node()
 
         # 정의 처리부
@@ -83,11 +150,32 @@ def conditional_statement_processing(node, cfg=None):
 
                 traverse(children['expression'], cfg, expression_node)
 
+        # 선언 및 정의
+        elif node_type == 'VariableDeclarationStatement':
+            if children['initialValue']:
+                if last_node.name == 'Expression':
+                    traverse(children, cfg, cfg.last_node())
+                else:
+                    node_id = node_counter.counter()
+                    expression_node = Node("Expression", node_id)
+
+                    (cfg.last_node()).add_successor(expression_node.id)
+                    cfg.add_node(expression_node)
+
+                    traverse(children, cfg, expression_node)
+
         # 리턴 처리부
-        elif node_type == 'Identifier' or node_type == 'BinaryOperation' or node_type == 'NumberLiteral':
+        elif (node_type == 'Identifier' or node_type == 'BinaryOperation'
+              or node_type == 'NumberLiteral' or node_type == 'IndexAccess'):
             node_id = node_counter.counter()
             return_node = Node("return", node_id)
-            return_node.feature.append(" " + create_feature(node))
+            return_node.feature.append("\n" + create_feature(children))
+            cfg.last_node().add_successor(return_node.id)
+            cfg.add_node(return_node)
+        elif node_type == 'TupleExpression':
+            return_node = Node("return", node_counter.counter())
+            for component in children['components']:
+                return_node.feature.append("\n" + create_feature(component))
             cfg.last_node().add_successor(return_node.id)
             cfg.add_node(return_node)
 
@@ -110,12 +198,8 @@ def conditional_statement_processing(node, cfg=None):
                 condition_node.add_successor(ifEnd_node.id)
             else:
                 traverse(children['FalseBody'], cfg, condition_node)
-                if not children['FalseBody']:
-                    condition_node.add_successor(ifEnd_node.id)
-                else:
-                    traverse(children['FalseBody'], cfg, condition_node)
-                    if cfg.last_node().name != "return":
-                        cfg.last_node().add_successor(ifEnd_node.id)
+                if cfg.last_node().name != "return":
+                    cfg.last_node().add_successor(ifEnd_node.id)
 
             cfg.add_node(ifEnd_node)
 
@@ -138,7 +222,7 @@ def conditional_statement_processing(node, cfg=None):
         # For문 처리부
         elif node_type == 'ForStatement':
             node_id = node_counter.counter()
-            VariableDeclaration_node = Node("Variable Declaration", node_id)
+            VariableDeclaration_node = Node("LoopVariable", node_id)
             (cfg.last_node()).add_successor(VariableDeclaration_node.id)
             cfg.add_node(VariableDeclaration_node)
             traverse(children['initExpression'], cfg, VariableDeclaration_node)
@@ -187,7 +271,7 @@ def create_cfg(node):
 def traverse(node, cfg=None, prev_node=None):
     node_type = node.get('type')
 
-    if not node_type:   
+    if not node_type:
         return
     # 함수선언부
     elif node_type == 'FunctionDefinition':
@@ -197,14 +281,17 @@ def traverse(node, cfg=None, prev_node=None):
             cfg_list.append(create_cfg(node))
         return
     # 함수 외부에서 선언 및 선언 & 정의 / 이벤트 정의 등은 사용하지 않음
-    elif node_type == 'StateVariableDeclaration' or node_type == 'UsingForDeclaration' or node_type == 'InheritanceSpecifier' or node_type == 'EventDefinition'  or node_type == 'PragmaDirective' or node_type == 'ModifierDefinition':
+    elif (node_type == 'StateVariableDeclaration' or node_type == 'UsingForDeclaration'
+          or node_type == 'InheritanceSpecifier' or node_type == 'EventDefinition'
+          or node_type == 'PragmaDirective' or node_type == 'ModifierDefinition' or node_type == 'StructDefinition'):
         return
-    # 연산자
-    elif node_type == 'BinaryOperation' or node_type == 'UnaryOperation':
+    # 연산자 + 단순 식별자(condition 단일값) + 점 연산자 + 배열
+    elif (node_type == 'BinaryOperation' or node_type == 'UnaryOperation'
+          or node_type == 'Identifier' or node_type == 'MemberAccess' or node_type == 'IndexAccess'):
         prev_node.feature.append("\n" + create_feature(node))
         return
-    # for문 변수 선언부
-    elif node_type == 'VariableDeclarationStatement':
+    # for문 변수 선언부 or 변수에 값 할당
+    elif node_type == 'VariableDeclarationStatement' or node_type == 'ExpressionStatement':
         prev_node.feature.append("\n" + create_feature(node))
         return
     # FunctionCall

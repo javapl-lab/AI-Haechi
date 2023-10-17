@@ -3,3 +3,4 @@ embedding/embedding_code/
 .idea/
 *.txt
 *.sol
+origin_sol_code/*.sol
