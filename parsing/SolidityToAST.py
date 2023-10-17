@@ -10,8 +10,6 @@ def solidity_to_ast(file_path):
     else:
         abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
 
-    print('으갸갸갹:', abs_result_path)
-
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ SolidityToAST start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
 
     try:
