@@ -5,10 +5,14 @@ from Graph_generator_for_GNN.parsing.cfg_class.GlobalCounter import GlobalCounte
 node_counter = GlobalCounter()
 function_counter = GlobalCounter()
 variable_counter = GlobalCounter()
+state_variable_counter = GlobalCounter()
 function_dict = dict()
 variable_dict = dict()
+state_variable_dict = dict()
+
 
 cfg_list = []
+
 
 
 # 노드를 받아와 해당 노드에서 feature를 문자열로 리턴
@@ -26,35 +30,44 @@ def create_feature(node):
         if node['expression']['type'] == 'Identifier':
             name = node['expression']['name']
 
+
             # 함수명 딕셔너리에 해당 키가 없으면 생성
             if name not in function_dict:
                 function_dict[name] = str(function_counter.counter())
 
-            feature += "function" + function_dict[name] + '('
+            if name == 'assert':
+                feature += "assert" + ' ( '
+            else:
+                feature += "function" + function_dict[name] + ' ( '
+
+
             length = len(node['arguments'])
             for i in range(length):
                 if i == 0:
                     feature += create_feature(node['arguments'][i])
                 else:
-                    feature += ', ' + create_feature(node['arguments'][i])
-            feature += ')'
+                    feature += ' , ' + create_feature(node['arguments'][i])
+            feature += ' ) '
             return feature
 
         # variable.push() 이런애들
         elif node['expression']['type'] == 'MemberAccess':
-            feature = create_feature(node['expression']) + '('
+            feature = create_feature(node['expression']) + ' ( '
             length = len(node['arguments'])
             for i in range(length):
                 if i == 0:
                     feature += create_feature(node['arguments'][i])
                 else:
-                    feature += ', ' + create_feature(node['arguments'][i])
-            feature += ')'
+                    feature += ' , ' + create_feature(node['arguments'][i])
+            feature += ' ) '
             return feature
 
     # 점
     elif node['type'] == 'MemberAccess':
-        feature = create_feature(node['expression']) + '.' + node['memberName']
+        if node['memberName'] in function_dict:
+            feature = create_feature(node['expression']) + ' . ' + function_dict[node['memberName']]
+        else:
+            feature = create_feature(node['expression']) + ' . ' + node['memberName']
         return feature
 
     # for문에서 변수 선언부의 자료형 제거 + '=' 생성
@@ -82,7 +95,7 @@ def create_feature(node):
 
     # 배열
     elif node['type'] == 'IndexAccess':
-        feature = create_feature(node['base']) + '[' + create_feature(node['index']) + ']'
+        feature = create_feature(node['base']) + ' [ ' + create_feature(node['index']) + ' ] '
         return feature
 
 
@@ -96,9 +109,11 @@ def create_feature(node):
 
         elif isinstance(value, str):
             if key == 'name':
-                if value in variable_dict:
+                if value in state_variable_dict:
+                    feature += "state_variable" + state_variable_dict[value]
+                elif value  in variable_dict:
                     feature += "variable" + variable_dict[value]
-                elif value not in variable_dict:
+                else:
                     variable_dict[value] = str(variable_counter.counter())
                     feature += "variable" + variable_dict[value]
             elif key == 'number':
@@ -248,6 +263,7 @@ def conditional_statement_processing(node, cfg=None):
             loopCondition_node.add_successor(forEnd_node.id)
 
 
+
 def create_cfg(node):
     cfg = CFG()
     node_id = node_counter.counter()
@@ -280,8 +296,14 @@ def traverse(node, cfg=None, prev_node=None):
         else:
             cfg_list.append(create_cfg(node))
         return
+
+    elif node_type == 'StateVariableDeclaration':
+        for x in node['variables']:
+            state_variable_dict[x['name']] = str(state_variable_counter.counter())
+        return
+
     # 함수 외부에서 선언 및 선언 & 정의 / 이벤트 정의 등은 사용하지 않음
-    elif (node_type == 'StateVariableDeclaration' or node_type == 'UsingForDeclaration'
+    elif (node_type == 'UsingForDeclaration'
           or node_type == 'InheritanceSpecifier' or node_type == 'EventDefinition'
           or node_type == 'PragmaDirective' or node_type == 'ModifierDefinition' or node_type == 'StructDefinition'):
         return
