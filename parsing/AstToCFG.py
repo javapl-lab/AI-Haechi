@@ -13,7 +13,26 @@ state_variable_dict = dict()
 
 cfg_list = []
 
+def test(node, cfg = None, pre_node = None, ifEnd_node = None):
+    # If문 처리부
+    node_id = node_counter.counter()
+    condition_node = Node("Condition", node_id)
+    pre_node.add_successor(condition_node.id)
+    cfg.add_node(condition_node)
+    traverse(node['condition'], cfg, condition_node)
 
+    traverse(node['TrueBody'], cfg, condition_node)
+    if cfg.last_node().name != "return":
+        cfg.last_node().add_successor(ifEnd_node.id)
+
+    if not node['FalseBody']:
+        condition_node.add_successor(ifEnd_node.id)
+    elif node['FalseBody']['type'] == 'IfStatement':
+        test(node['FalseBody'], cfg, condition_node, ifEnd_node)
+    else:
+        traverse(node['FalseBody'], cfg, condition_node)
+        if cfg.last_node().name != "return":
+            cfg.last_node().add_successor(ifEnd_node.id)
 
 # 노드를 받아와 해당 노드에서 feature를 문자열로 리턴
 def create_feature(node):
@@ -32,13 +51,13 @@ def create_feature(node):
 
 
             # 함수명 딕셔너리에 해당 키가 없으면 생성
-            if name not in function_dict:
-                function_dict[name] = str(function_counter.counter())
+            # if name not in function_dict:
+            #     function_dict[name] = str(function_counter.counter())
 
-            if name == 'assert':
-                feature += "assert" + ' ( '
-            else:
+            if name in function_dict:
                 feature += "function" + function_dict[name] + ' ( '
+            else:
+                feature += name + ' ( '
 
 
             length = len(node['arguments'])
@@ -65,7 +84,7 @@ def create_feature(node):
     # 점
     elif node['type'] == 'MemberAccess':
         if node['memberName'] in function_dict:
-            feature = create_feature(node['expression']) + ' . ' + function_dict[node['memberName']]
+            feature = create_feature(node['expression']) + ' . ' + "function" + function_dict[node['memberName']]
         else:
             feature = create_feature(node['expression']) + ' . ' + node['memberName']
         return feature
@@ -87,10 +106,10 @@ def create_feature(node):
     elif node['type'] == 'UnaryOperation':
         #전위
         if node['isPrefix'] == True:
-            feature = node['operator'] + create_feature(node['subExpression'])
+            feature = node['operator'] + ' ' + create_feature(node['subExpression'])
         #후위
         elif node['isPrefix'] == False:
-            feature =  create_feature(node['subExpression']) + node['operator']
+            feature =  create_feature(node['subExpression']) + ' ' + node['operator']
         return feature
 
     # 배열
@@ -147,6 +166,12 @@ def conditional_statement_processing(node, cfg=None):
             cfg.last_node().add_successor(return_node.id)
             cfg.add_node(return_node)
             return
+        # break; 처리
+        if children == ';':
+            break_node = Node("break", node_counter.counter())
+            cfg.last_node().add_successor(break_node.id)
+            cfg.add_node(break_node)
+            return
 
 
         node_type = children['type']
@@ -181,7 +206,8 @@ def conditional_statement_processing(node, cfg=None):
 
         # 리턴 처리부
         elif (node_type == 'Identifier' or node_type == 'BinaryOperation'
-              or node_type == 'NumberLiteral' or node_type == 'IndexAccess'):
+              or node_type == 'NumberLiteral' or node_type == 'IndexAccess'
+                or node_type == 'FunctionCall'):
             node_id = node_counter.counter()
             return_node = Node("return", node_id)
             return_node.feature.append("\n" + create_feature(children))
@@ -189,8 +215,12 @@ def conditional_statement_processing(node, cfg=None):
             cfg.add_node(return_node)
         elif node_type == 'TupleExpression':
             return_node = Node("return", node_counter.counter())
-            for component in children['components']:
-                return_node.feature.append("\n" + create_feature(component))
+            length = len(children['components'])
+            for i in range(length):
+                if i == 0:
+                    return_node.feature.append(" " + create_feature(children['components'][i]))
+                else:
+                    return_node.feature.append(" , " + create_feature(children['components'][i]))
             cfg.last_node().add_successor(return_node.id)
             cfg.add_node(return_node)
 
@@ -205,14 +235,35 @@ def conditional_statement_processing(node, cfg=None):
             node_id = node_counter.counter()
             ifEnd_node = Node("IfEnd", node_id)
 
-            traverse(children['TrueBody'], cfg, condition_node)
+            # True
+            if children['TrueBody']['type'] != 'Block':
+                test_dict = {}
+                list = []
+                test_dict['type'] = 'Block'
+                list.append(children['TrueBody'])
+                test_dict['statements'] = list
+                traverse(test_dict, cfg, condition_node)
+            else:
+                traverse(children['TrueBody'], cfg, condition_node)
+
             if cfg.last_node().name != "return":
                 cfg.last_node().add_successor(ifEnd_node.id)
 
+            # False
             if not children['FalseBody']:
                 condition_node.add_successor(ifEnd_node.id)
+            elif children['FalseBody']['type'] == 'IfStatement':
+                test(children['FalseBody'], cfg, condition_node, ifEnd_node)
+            elif children['FalseBody']['type'] != 'Block':
+                test_dict = {}
+                list = []
+                test_dict['type'] = 'Block'
+                list.append(children['FalseBody'])
+                test_dict['statements'] = list
+                traverse(test_dict, cfg, condition_node)
             else:
                 traverse(children['FalseBody'], cfg, condition_node)
+
                 if cfg.last_node().name != "return":
                     cfg.last_node().add_successor(ifEnd_node.id)
 
@@ -226,7 +277,15 @@ def conditional_statement_processing(node, cfg=None):
             cfg.add_node(loopCondition_node)
             traverse(children['condition'], cfg, loopCondition_node)
 
-            traverse(children['body'], cfg, loopCondition_node)
+            if children['body']['type'] != 'Block':
+                test_dict = {}
+                list = []
+                test_dict['type'] = 'Block'
+                list.append(children['body'])
+                test_dict['statements'] = list
+                traverse(test_dict, cfg, loopCondition_node)
+            else:
+                traverse(children['body'], cfg, loopCondition_node)
             (cfg.last_node()).add_successor(loopCondition_node.id)
 
             node_id = node_counter.counter()
@@ -240,7 +299,10 @@ def conditional_statement_processing(node, cfg=None):
             VariableDeclaration_node = Node("LoopVariable", node_id)
             (cfg.last_node()).add_successor(VariableDeclaration_node.id)
             cfg.add_node(VariableDeclaration_node)
-            traverse(children['initExpression'], cfg, VariableDeclaration_node)
+            if children['initExpression'] == None:
+                pass
+            else:
+                traverse(children['initExpression'], cfg, VariableDeclaration_node)
 
             node_id = node_counter.counter()
             loopCondition_node = Node("LoopCondition", node_id)
@@ -248,7 +310,15 @@ def conditional_statement_processing(node, cfg=None):
             cfg.add_node(loopCondition_node)
             traverse(children['conditionExpression'], cfg, loopCondition_node)
 
-            traverse(children['body'], cfg, loopCondition_node)
+            if children['body']['type'] != 'Block':
+                test_dict = {}
+                list = []
+                test_dict['type'] = 'Block'
+                list.append(children['body'])
+                test_dict['statements'] = list
+                traverse(test_dict, cfg, loopCondition_node)
+            else:
+                traverse(children['body'], cfg, loopCondition_node)
 
             node_id = node_counter.counter()
             loopExpression_node = Node("LoopExpression", node_id)
@@ -268,6 +338,7 @@ def create_cfg(node):
     cfg = CFG()
     node_id = node_counter.counter()
     function_node = Node("Function", node_id)
+    function_node.name = "Function"
     cfg.add_node(function_node)
 
     # 매개변수에 대한 내용은 추가할거면 여기에
@@ -289,8 +360,13 @@ def traverse(node, cfg=None, prev_node=None):
 
     if not node_type:
         return
+
     # 함수선언부
     elif node_type == 'FunctionDefinition':
+
+        if node['name'] not in function_dict:
+            function_dict[node['name']] = str(function_counter.counter())
+
         if isinstance(node['body'], list):
             pass
         else:
@@ -311,6 +387,7 @@ def traverse(node, cfg=None, prev_node=None):
     elif (node_type == 'BinaryOperation' or node_type == 'UnaryOperation'
           or node_type == 'Identifier' or node_type == 'MemberAccess' or node_type == 'IndexAccess'):
         prev_node.feature.append("\n" + create_feature(node))
+
         return
     # for문 변수 선언부 or 변수에 값 할당
     elif node_type == 'VariableDeclarationStatement' or node_type == 'ExpressionStatement':
