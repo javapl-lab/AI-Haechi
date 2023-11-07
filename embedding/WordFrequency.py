@@ -24,6 +24,8 @@ for weakness in tmp:
         file_path = folder_path + '\\' + file_name
         try:
             viz_code = generate(file_path, file_name)
+            viz_code = viz_code.split(' ')
+            print(viz_code)
 
             for word in viz_code:
                 word = word.lower()
@@ -35,6 +37,8 @@ for weakness in tmp:
             success_count += 1
             success_file.append(file_name)
             print('now...', file_name)
+            if success_count == 1:
+                break
 
         except Exception as e:
             fail_count += 1
@@ -50,7 +54,7 @@ for weakness in tmp:
 #
 vocabulary_sorted = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)
 
-integer_encoding = open(abs_result_path + '/WordFrequencyr.txt', 'w+')
+integer_encoding = open(abs_result_path + '/WordFrequency.txt', 'w+')
 integer_encoding.write(str(vocabulary_sorted))
 integer_encoding.close()
 
