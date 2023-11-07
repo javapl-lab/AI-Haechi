@@ -337,10 +337,12 @@ def traverse(node, cfg=None, prev_node=None):
 
     for key, value in node.items():
         if isinstance(value, dict):
+            print('now...: ', key, ', ', value)
             traverse(value, cfg, current_node)
         elif isinstance(value, list):
             for item in value:
                 if isinstance(item, dict):
+                    print('now...: ', key, ', ', value)
                     traverse(item, cfg, current_node)
 
 
