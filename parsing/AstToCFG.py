@@ -50,7 +50,7 @@ def create_feature(node):
             name = node['expression']['name']
 
 
-            # 함수명 딕셔너리에 해당 키가 없으면 생성
+            # # 함수명 딕셔너리에 해당 키가 없으면 생성
             # if name not in function_dict:
             #     function_dict[name] = str(function_counter.counter())
 
@@ -120,7 +120,13 @@ def create_feature(node):
     # 튜플 처리
     elif node['type'] == 'TupleExpression':
         length = len(node['components'])
+        print(length)
         for i in range(length):
+            if node['components'][i] == None:
+                print(i)
+                print(node['components'][i])
+                node['components'][i] = {'type': 'Identifier', 'name': 'None'}
+
             if i == 0:
                 feature += "( " + create_feature(node['components'][i])
             else:
@@ -140,7 +146,9 @@ def create_feature(node):
 
         elif isinstance(value, str):
             if key == 'name':
-                if value in state_variable_dict:
+                if value == 'None':
+                    feature += 'None'
+                elif value in state_variable_dict:
                     feature += "state_variable" + state_variable_dict[value]
                 elif value  in variable_dict:
                     feature += "variable" + variable_dict[value]
