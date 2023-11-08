@@ -117,6 +117,18 @@ def create_feature(node):
         feature = create_feature(node['base']) + ' [ ' + create_feature(node['index']) + ' ] '
         return feature
 
+    # 튜플 처리
+    elif node['type'] == 'TupleExpression':
+        length = len(node['components'])
+        for i in range(length):
+            if i == 0:
+                feature += "( " + create_feature(node['components'][i])
+            else:
+                feature += " , " + create_feature(node['components'][i])
+        feature += " )"
+
+        return feature
+
 
     for key, value in node.items():
         if isinstance(value, dict):
@@ -145,7 +157,10 @@ def create_feature(node):
             elif key == 'visibility':
                 feature += value
             elif key == 'value':
-                feature += 'string'
+                try:
+                    feature += 'string'
+                except Exception as e:
+                    print("장깨시치")
         elif isinstance(value, bool):
             if key == 'value':
                 if value == True:
@@ -207,25 +222,25 @@ def conditional_statement_processing(node, cfg=None):
         # 리턴 처리부
         elif (node_type == 'Identifier' or node_type == 'BinaryOperation'
               or node_type == 'NumberLiteral' or node_type == 'IndexAccess'
-                or node_type == 'FunctionCall'):
+                or node_type == 'FunctionCall' or node_type == 'MemberAccess'
+                or node_type == 'TupleExpression'):
             node_id = node_counter.counter()
             return_node = Node("return", node_id)
             return_node.feature.append("\n" + create_feature(children))
             cfg.last_node().add_successor(return_node.id)
             cfg.add_node(return_node)
-        elif node_type == 'TupleExpression':
-            return_node = Node("return", node_counter.counter())
-            length = len(children['components'])
-            for i in range(length):
-                if i == 0:
-                    return_node.feature.append(" " + create_feature(children['components'][i]))
-                else:
-                    return_node.feature.append(" , " + create_feature(children['components'][i]))
-            cfg.last_node().add_successor(return_node.id)
-            cfg.add_node(return_node)
+
+        # throw; 처리
+        elif node_type == 'ThrowStatement':
+            node_id = node_counter.counter()
+            throw_node = Node("throw", node_id)
+            throw_node.feature.append("\n" + create_feature(children))
+            cfg.last_node().add_successor(throw_node.id)
+            cfg.add_node(throw_node)
 
         # If문 처리부
         elif node_type == 'IfStatement':
+            ifendcount = 0
             node_id = node_counter.counter()
             condition_node = Node("Condition", node_id)
             (cfg.last_node()).add_successor(condition_node.id)
@@ -248,6 +263,8 @@ def conditional_statement_processing(node, cfg=None):
 
             if cfg.last_node().name != "return":
                 cfg.last_node().add_successor(ifEnd_node.id)
+            else:
+                ifendcount += 1
 
             # False
             if not children['FalseBody']:
@@ -266,8 +283,13 @@ def conditional_statement_processing(node, cfg=None):
 
                 if cfg.last_node().name != "return":
                     cfg.last_node().add_successor(ifEnd_node.id)
+                else:
+                    ifendcount += 1
 
-            cfg.add_node(ifEnd_node)
+            if ifendcount == 2:
+                pass
+            else:
+                cfg.add_node(ifEnd_node)
 
         # While문 처리부
         elif node_type == 'WhileStatement':
@@ -335,14 +357,11 @@ def conditional_statement_processing(node, cfg=None):
 
 
 def create_cfg(node):
+
     cfg = CFG()
     node_id = node_counter.counter()
     function_node = Node("Function", node_id)
-    function_node.name = "Function"
     cfg.add_node(function_node)
-
-    # 매개변수에 대한 내용은 추가할거면 여기에
-
     traverse(node['body'], cfg, function_node)
 
     # FunctionEnd
@@ -369,6 +388,8 @@ def traverse(node, cfg=None, prev_node=None):
 
         if isinstance(node['body'], list):
             pass
+        elif not node['body']['statements']:
+            pass
         else:
             cfg_list.append(create_cfg(node))
         return
@@ -379,7 +400,7 @@ def traverse(node, cfg=None, prev_node=None):
         return
 
     # 함수 외부에서 선언 및 선언 & 정의 / 이벤트 정의 등은 사용하지 않음
-    elif (node_type == 'UsingForDeclaration'
+    elif (node_type == 'UsingForDeclaration' or node_type == 'EnumDefinition'
           or node_type == 'InheritanceSpecifier' or node_type == 'EventDefinition'
           or node_type == 'PragmaDirective' or node_type == 'ModifierDefinition' or node_type == 'StructDefinition'):
         return
