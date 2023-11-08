@@ -24,6 +24,8 @@ for weakness in tmp:
         file_path = folder_path + '\\' + file_name
         try:
             viz_code = generate(file_path, file_name)
+            print(viz_code)
+            viz_code.re('')
             viz_code = viz_code.split(' ')
             print(viz_code)
 
