@@ -92,7 +92,10 @@ def create_feature(node):
     # for문에서 변수 선언부의 자료형 제거 + '=' 생성
     elif node['type'] == 'VariableDeclarationStatement':
         # ast구조에 예외가 없다는 가정하에 진행한 내용
-        feature = create_feature(node['variables']) + " = " + create_feature(node['initialValue'])
+        if node['initialValue'] == None:
+            feature = create_feature(node['variables'])
+        else:
+            feature = create_feature(node['variables']) + " = " + create_feature(node['initialValue'])
         return feature
     elif node['type'] == 'ElementaryTypeName':
         return feature
@@ -123,8 +126,6 @@ def create_feature(node):
         print(length)
         for i in range(length):
             if node['components'][i] == None:
-                print(i)
-                print(node['components'][i])
                 node['components'][i] = {'type': 'Identifier', 'name': 'None'}
 
             if i == 0:
@@ -231,7 +232,7 @@ def conditional_statement_processing(node, cfg=None):
         elif (node_type == 'Identifier' or node_type == 'BinaryOperation'
               or node_type == 'NumberLiteral' or node_type == 'IndexAccess'
                 or node_type == 'FunctionCall' or node_type == 'MemberAccess'
-                or node_type == 'TupleExpression'):
+                or node_type == 'TupleExpression' or node_type == 'BooleanLiteral'):
             node_id = node_counter.counter()
             return_node = Node("return", node_id)
             return_node.feature.append("\n" + create_feature(children))
@@ -259,7 +260,7 @@ def conditional_statement_processing(node, cfg=None):
             ifEnd_node = Node("IfEnd", node_id)
 
             # True
-            if children['TrueBody']['type'] != 'Block':
+            if children['TrueBody'] == None or children['TrueBody']['type'] != 'Block':
                 test_dict = {}
                 list = []
                 test_dict['type'] = 'Block'

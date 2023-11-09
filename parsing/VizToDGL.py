@@ -22,10 +22,10 @@ def viz_to_dgl(viz_code):
     viz_code = (viz_code.strip().split('\n'))
     print('ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ')
     for line in viz_code:
+        print(line)
         if re.findall(r'\d+ \[label = ', line):
             node_id = line.split()[0]
             feature_list = []
-            print('node_id:', node_id)
             if '->' in line:
                 edge_dict[line.split()[0] + ' -> ' + line.split()[2]] = re.sub(r"[^a-zA-Z]", "", line.split()[5])
             else:
@@ -35,9 +35,7 @@ def viz_to_dgl(viz_code):
                 line = ' '.join(line.split()[:-1])
             if 'shape' in line:
                 line = ' '.join(line.split()[:-3])
-            print(line)
             feature_list.append(line)
-            print(feature_list)
             feature_dict[node_id] = feature_list
 
     print('node_dict:', node_dict)

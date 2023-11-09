@@ -2,16 +2,18 @@ import WordRank
 import os
 
 filename = 'for_code'
-abstract_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
+abstract_result_path = os.path.abspath('../result/')
 
-cfg_file = open(abstract_result_path + 'cfg_img/' + filename, 'r').read().split('  ')
+cfg_file = open(abstract_result_path + '/cfg/' + filename, 'r').read().split('  ')
 index_file = WordRank.word_to_index
+print(index_file)
+cfg_file = cfg_file[0]
+print(cfg_file)
 
 for empty in cfg_file:
     if empty == '':
         cfg_file.remove(empty)
 
-print('cfg_file:', cfg_file)
 
 encoded_sentences = []
 for word in cfg_file:
