@@ -31,5 +31,5 @@ for word in word_to_index:
 
 print(zero_to_one)
 x = open(abstract_result_path + '/' + 'test.txt', 'w+')
-x.write(str(word_to_index))
+x.write(str(zero_to_one))
 x.close()
