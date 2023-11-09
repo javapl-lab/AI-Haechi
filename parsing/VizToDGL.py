@@ -20,9 +20,9 @@ def viz_to_dgl(viz_code):
     tensor_V = th.tensor(dgl_V)
 
     viz_code = (viz_code.strip().split('\n'))
-    print('ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ')
+    # 정규식을 사용해 viz_code로 부터 데이터 추출
     for line in viz_code:
-        print(line)
+        # node_dict와 edge_dict를 생성
         if re.findall(r'\d+ \[label = ', line):
             node_id = line.split()[0]
             feature_list = []
@@ -30,13 +30,23 @@ def viz_to_dgl(viz_code):
                 edge_dict[line.split()[0] + ' -> ' + line.split()[2]] = re.sub(r"[^a-zA-Z]", "", line.split()[5])
             else:
                 node_dict[line.split()[0]] = re.sub(r"[^a-zA-Z]", "", line.split()[3])
-        elif '{' not in line and '[' not in line and '=' in line or '+' in line or '-':
+        # feature_dict를 생성
+        elif '{' not in line and '[' not in line and '->' not in line:
+            pattern = re.compile(r'"(.*?);')
+            line = re.sub(pattern, '', line)
+            print('-----------------')
+            print('first filtered line: ' + line)
+            print('-----------------')
             if ']' in line:
                 line = ' '.join(line.split()[:-1])
             if 'shape' in line:
                 line = ' '.join(line.split()[:-3])
             feature_list.append(line)
             feature_dict[node_id] = feature_list
+
+    # 맨 마지막 키인 '}'를 딕셔너리에서 제거
+    last_key = list(feature_dict.keys())[-1]
+    del feature_dict[last_key]
 
     print('node_dict:', node_dict)
     print('edge_dict:', edge_dict)
