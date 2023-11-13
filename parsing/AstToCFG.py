@@ -123,16 +123,15 @@ def create_feature(node):
     # 튜플 처리
     elif node['type'] == 'TupleExpression':
         length = len(node['components'])
-        print(length)
         for i in range(length):
             if node['components'][i] == None:
                 node['components'][i] = {'type': 'Identifier', 'name': 'None'}
 
             if i == 0:
-                feature += "( " + create_feature(node['components'][i])
+                feature += " ( " + create_feature(node['components'][i])
             else:
                 feature += " , " + create_feature(node['components'][i])
-        feature += " )"
+        feature += " ) "
 
         return feature
 
@@ -166,10 +165,7 @@ def create_feature(node):
             elif key == 'visibility':
                 feature += value
             elif key == 'value':
-                try:
-                    feature += 'string'
-                except Exception as e:
-                    print("장깨시치")
+                feature += 'string'
         elif isinstance(value, bool):
             if key == 'value':
                 if value == True:

@@ -24,10 +24,10 @@ def generate(file_path, file_name):
         viz_to_dgl(viz_code)
         abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
 
-        file_name = file_name.split('.')[0]
-        cfg = graphviz.Source(viz_code)
-        cfg.format = 'png'
-        cfg.render(filename=os.path.join(abs_result_path, 'cfg/', file_name))
+        # file_name = file_name.split('.')[0]
+        # cfg = graphviz.Source(viz_code)
+        # cfg.format = 'png'
+        # cfg.render(filename=os.path.join(abs_result_path, 'cfg/', file_name))
 
         return viz_code
 
