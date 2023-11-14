@@ -1,16 +1,22 @@
+import os.path
 import re
 import dgl
+import json
 import torch as th
 
 
 def viz_to_dgl(viz_code):
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
+    print(viz_code)
+    print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
     dgl_U, dgl_V = [], []
     node_dict = dict()
     edge_dict = dict()
     feature_dict = dict()
     feature_list = []
     node_id = 0
+    normalization = open(os.path.abspath('../Graph_generator_for_GNN/result/embedding/Normalization.txt'), 'r').read()
+    normalization_dict = eval(normalization)
 
     viz_edges = re.findall(r'\d+ -> \d+', viz_code)
     for i in viz_edges:
@@ -22,31 +28,51 @@ def viz_to_dgl(viz_code):
     viz_code = (viz_code.strip().split('\n'))
     # 정규식을 사용해 viz_code로 부터 데이터 추출
     for line in viz_code:
-        # node_dict와 edge_dict를 생성
+        # node_dict를 생성
         if re.findall(r'\d+ \[label = ', line):
             node_id = line.split()[0]
             feature_list = []
-            if '->' in line:
+            if ' -> ' not in line:
+                node_dict[line.split()[0]] = re.sub(r"[^a-zA-Z]", "", line.split()[3])
+                
+        # edge_dict를 생성
+        if '->' in line:
+            if 'label' in line:
                 edge_dict[line.split()[0] + ' -> ' + line.split()[2]] = re.sub(r"[^a-zA-Z]", "", line.split()[5])
             else:
-                node_dict[line.split()[0]] = re.sub(r"[^a-zA-Z]", "", line.split()[3])
+                print('edge: ', line)
+                edge_dict[line.split()[0] + ' -> ' + re.sub(';', '', line.split()[2])] = 'normal'
+                
         # feature_dict를 생성
-        elif '{' not in line and '[' not in line and '->' not in line:
+        if '{' not in line and '[' not in line and '->' not in line:
             pattern = re.compile(r'"(.*?);')
             line = re.sub(pattern, '', line)
             print('-----------------')
             print('first filtered line: ' + line)
-            print('-----------------')
             if ']' in line:
                 line = ' '.join(line.split()[:-1])
             if 'shape' in line:
                 line = ' '.join(line.split()[:-3])
-            feature_list.append(line)
+            line = line.split(' ')
+            for token in line:
+                if token != '':
+                    if token in normalization_dict:
+                        feature_list.append(normalization_dict[token])
+                    else:
+                        feature_list.append(1)
+            print(feature_list)
             feature_dict[node_id] = feature_list
 
     # 맨 마지막 키인 '}'를 딕셔너리에서 제거
     last_key = list(feature_dict.keys())[-1]
     del feature_dict[last_key]
+
+    # 가장 긴 특징의 길이
+    max_feature_length = 0
+    for key in feature_dict:
+        if max_feature_length < len(feature_dict[key]):
+            max_feature_length = len(feature_dict[key])
+    print('max_feature_length:', max_feature_length)
 
     print('node_dict:', node_dict)
     print('edge_dict:', edge_dict)
@@ -68,5 +94,16 @@ def viz_to_dgl(viz_code):
     }
     graph = dgl.heterograph(graph_data)
 
+    graph.nodes['Expression'].data['test'] = th.ones(graph.num_nodes('Expression'), 6)
+    print(graph.nodes['Expression'].data['test'])
+
+    graph.nodes['Expression'].data['test'][2][0] = 1.1
+    graph.nodes['Expression'].data['test'][2][1] = 1.2
+    graph.nodes['Expression'].data['test'][2][2] = 1.3
+    graph.nodes['Expression'].data['test'][2][3] = 1.4
+
+    graph.nodes['Expression'].data['test'][10][0] = 1.95
+
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL end ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
+
 
