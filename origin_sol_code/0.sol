@@ -56,7 +56,7 @@ contract BREBuy {
        
         if(isLock) {
             stopGame();
-        }else{
+        } else {
             startNewGame();
             emit openLockEvent();
         }
