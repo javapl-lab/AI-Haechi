@@ -23,3 +23,13 @@ integer_index_encoding = open(abstract_result_path + '/' + 'WordRank.txt', 'w+')
 integer_index_encoding.write(str(word_to_index))
 integer_index_encoding.close()
 
+#==================================================
+length = len(word_to_index)
+zero_to_one = {}
+for word in word_to_index:
+    zero_to_one[word] = (word_to_index[word] - 1)/ (length - 1)
+
+print(zero_to_one)
+x = open(abstract_result_path + '/' + 'test.txt', 'w+')
+x.write(str(word_to_index))
+x.close()
