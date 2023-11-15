@@ -11,7 +11,7 @@ def viz_to_dgl(viz_code):
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
     dgl_U, dgl_V = [], []
     node_dict = dict()
-    edge_dict = dict()
+    edge_list = []
     feature_dict = dict()
     feature_list = []
     node_id = 0
@@ -28,27 +28,19 @@ def viz_to_dgl(viz_code):
     viz_code = (viz_code.strip().split('\n'))
     # 정규식을 사용해 viz_code로 부터 데이터 추출
     for line in viz_code:
-        # node_dict를 생성
+        # node_dict를 먼저 생성
         if re.findall(r'\d+ \[label = ', line):
             node_id = line.split()[0]
             feature_list = []
             if ' -> ' not in line:
                 node_dict[line.split()[0]] = re.sub(r"[^a-zA-Z]", "", line.split()[3])
-                
-        # edge_dict를 생성
-        if '->' in line:
-            if 'label' in line:
-                edge_dict[line.split()[0] + ' -> ' + line.split()[2]] = re.sub(r"[^a-zA-Z]", "", line.split()[5])
-            else:
-                print('edge: ', line)
-                edge_dict[line.split()[0] + ' -> ' + re.sub(';', '', line.split()[2])] = 'normal'
-                
+
         # feature_dict를 생성
         if '{' not in line and '[' not in line and '->' not in line:
             pattern = re.compile(r'"(.*?);')
             line = re.sub(pattern, '', line)
             print('-----------------')
-            print('first filtered line: ' + line)
+            print('filtered line: ' + line)
             if ']' in line:
                 line = ' '.join(line.split()[:-1])
             if 'shape' in line:
@@ -63,6 +55,14 @@ def viz_to_dgl(viz_code):
             print(feature_list)
             feature_dict[node_id] = feature_list
 
+    for line in viz_code:
+        # nodedict를 사용해 edge_dict를 생성
+        if '->' in line:
+            if 'label' in line:
+                edge_list.append((line.split()[0], re.sub(r"[^a-zA-Z]", "", line.split()[5]), line.split()[2]))
+            else:
+                edge_list.append((line.split()[0], 'normal', re.sub(';', '', line.split()[2])))
+
     # 맨 마지막 키인 '}'를 딕셔너리에서 제거
     last_key = list(feature_dict.keys())[-1]
     del feature_dict[last_key]
@@ -72,11 +72,11 @@ def viz_to_dgl(viz_code):
     for key in feature_dict:
         if max_feature_length < len(feature_dict[key]):
             max_feature_length = len(feature_dict[key])
-    print('max_feature_length:', max_feature_length)
 
     print('node_dict:', node_dict)
-    print('edge_dict:', edge_dict)
+    print('edge_list:', edge_list)
     print('feature_dict:', feature_dict)
+    print('max_feature_length:', max_feature_length)
 
     graph_data = {
         ('Function', 'normal', 'Block'): (th.tensor([0]), th.tensor([1])),
@@ -93,9 +93,9 @@ def viz_to_dgl(viz_code):
         ('Expression', 'normal', 'FunctionEnd'): (th.tensor([10]), th.tensor([11])),
     }
     graph = dgl.heterograph(graph_data)
+    print(graph)
 
     graph.nodes['Expression'].data['test'] = th.ones(graph.num_nodes('Expression'), 6)
-    print(graph.nodes['Expression'].data['test'])
 
     graph.nodes['Expression'].data['test'][2][0] = 1.1
     graph.nodes['Expression'].data['test'][2][1] = 1.2
