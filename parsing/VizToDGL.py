@@ -7,8 +7,8 @@ import torch as th
 
 def viz_to_dgl(viz_code):
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
-    print(viz_code)
-    print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
+    # print(viz_code)
+    # print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
     dgl_U, dgl_V = [], []
     node_dict = dict()
     edge_list = []
@@ -39,8 +39,8 @@ def viz_to_dgl(viz_code):
         if '{' not in line and '[' not in line and '->' not in line:
             pattern = re.compile(r'"(.*?);')
             line = re.sub(pattern, '', line)
-            print('-----------------')
-            print('filtered line: ' + line)
+            # print('-----------------')
+            # print('filtered line: ' + line)
             if ']' in line:
                 line = ' '.join(line.split()[:-1])
             if 'shape' in line:
@@ -52,7 +52,7 @@ def viz_to_dgl(viz_code):
                         feature_list.append(normalization_dict[token])
                     else:
                         feature_list.append(1)
-            print(feature_list)
+            #print(feature_list)
             feature_dict[node_id] = feature_list
 
     for line in viz_code:
@@ -78,23 +78,6 @@ def viz_to_dgl(viz_code):
     print('feature_dict:', feature_dict)
     print('max_feature_length:', max_feature_length)
 
-    graph_data1 = {
-        ('Function', 'normal', 'Block'): (th.tensor([0]), th.tensor([1])),
-        ('Block', 'normal', 'Expression'): (th.tensor([1]), th.tensor([2])),
-        ('Expression', 'normal', 'Condition'): (th.tensor([2]), th.tensor([3])),
-        ('Condition', 'true', 'Block'): (th.tensor([3]), th.tensor([5])),
-        ('Condition', 'false', 'Block'): (th.tensor([3]), th.tensor([8])),
-        ('Block', 'normal', 'Expression'): (th.tensor([5]), th.tensor([6])),
-        ('Expression', 'normal', 'return'): (th.tensor([6]), th.tensor([7])),
-        ('return', 'normal', 'FunctionEnd'): (th.tensor([7]), th.tensor([11])),
-        ('Block', 'normal', 'Expression'): (th.tensor([8]), th.tensor([9])),
-        ('Expression', 'normal', 'IfEnd'): (th.tensor([9]), th.tensor([4])),
-        ('IfEnd', 'normal', 'Expression'): (th.tensor([4]), th.tensor([10])),
-        ('Expression', 'normal', 'FunctionEnd'): (th.tensor([10]), th.tensor([11])),
-    }
-    graph = dgl.heterograph(graph_data1)
-    print(graph)
-
     ###################################################################################################################
 
     tuple_list = []
@@ -119,9 +102,6 @@ def viz_to_dgl(viz_code):
                     obj.u_list.append(int(u))
                     obj.v_list.append(int(v))
 
-
-
-
     # objects 리스트에는 엣지클래스의 객체들이 담겨 있다.
     # 객체들은 각각 튜플, 그리고 해당 튜플로 이루어진 u,v쌍을 리스트로 지니고 있다.
     ###################################################################################################################
@@ -132,44 +112,21 @@ def viz_to_dgl(viz_code):
         graph_data[obj.edge] = (th.tensor(obj.u_list), th.tensor(obj.v_list))
 
     graph = dgl.heterograph(graph_data)
-    print(graph)
-
 
     # 그래프 생성
     ###################################################################################################################
 
+    graph.nodes['Expression'].data['expression'] = th.ones(graph.num_nodes('Expression'), max_feature_length)
 
 
+    for key, values in feature_dict.items():
+        for i in range(len(values)):
+            graph.nodes['Expression'].data['expression'][int(key)][i] = values[i]
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    #
-    # graph.nodes['Expression'].data['test'] = th.ones(graph.num_nodes('Expression'), 6)
-    #
-    # graph.nodes['Expression'].data['test'][2][0] = 1.1
-    # graph.nodes['Expression'].data['test'][2][1] = 1.2
-    # graph.nodes['Expression'].data['test'][2][2] = 1.3
-    # graph.nodes['Expression'].data['test'][2][3] = 1.4
-    #
-    # graph.nodes['Expression'].data['test'][10][0] = 1.95
+    print(graph)
 
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL end ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
 
-
+    
+    # expression노드에 특징 삽입
+    ###################################################################################################################
