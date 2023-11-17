@@ -24,13 +24,10 @@ for weakness in tmp:
         file_path = folder_path + '\\' + file_name
         try:
             viz_code = generate(file_path, file_name)
-            # viz_code = re.sub(r'"]; | \b\d+.*?\n | " | ,', '', viz_code)
-            # viz_code = re.sub(r'\n', ' ', viz_code)
-            # viz_code = viz_code.split(' ')[6:]
 
             for line in viz_code.split("\n"):
                 for word in line.split(' '):
-                    #word = word.lower()
+
                     result.append(word)
                     if word not in vocabulary:
                         vocabulary[word] = 0

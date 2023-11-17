@@ -78,7 +78,7 @@ def viz_to_dgl(viz_code):
     print('feature_dict:', feature_dict)
     print('max_feature_length:', max_feature_length)
 
-    graph_data = {
+    graph_data1 = {
         ('Function', 'normal', 'Block'): (th.tensor([0]), th.tensor([1])),
         ('Block', 'normal', 'Expression'): (th.tensor([1]), th.tensor([2])),
         ('Expression', 'normal', 'Condition'): (th.tensor([2]), th.tensor([3])),
@@ -92,17 +92,83 @@ def viz_to_dgl(viz_code):
         ('IfEnd', 'normal', 'Expression'): (th.tensor([4]), th.tensor([10])),
         ('Expression', 'normal', 'FunctionEnd'): (th.tensor([10]), th.tensor([11])),
     }
+    graph = dgl.heterograph(graph_data1)
+    print(graph)
+
+    ###################################################################################################################
+
+    tuple_list = []
+    objects = []
+    class EdgeClass:
+        def __init__(self, edge):
+            self.u_list = []
+            self.v_list = []
+            self.edge = edge
+
+    for u, edge, v in edge_list:
+        if (node_dict[u], edge, node_dict[v]) not in tuple_list:
+            tuple_list.append((node_dict[u], edge, node_dict[v]))
+
+            obj = EdgeClass((node_dict[u], edge, node_dict[v]))
+            objects.append(obj)
+            obj.u_list.append(int(u))
+            obj.v_list.append(int(v))
+        else:
+            for obj in objects:
+                if obj.edge == (node_dict[u], edge, node_dict[v]):
+                    obj.u_list.append(int(u))
+                    obj.v_list.append(int(v))
+
+
+
+
+    # objects 리스트에는 엣지클래스의 객체들이 담겨 있다.
+    # 객체들은 각각 튜플, 그리고 해당 튜플로 이루어진 u,v쌍을 리스트로 지니고 있다.
+    ###################################################################################################################
+
+    graph_data = {}
+
+    for obj in objects:
+        graph_data[obj.edge] = (th.tensor(obj.u_list), th.tensor(obj.v_list))
+
     graph = dgl.heterograph(graph_data)
     print(graph)
 
-    graph.nodes['Expression'].data['test'] = th.ones(graph.num_nodes('Expression'), 6)
 
-    graph.nodes['Expression'].data['test'][2][0] = 1.1
-    graph.nodes['Expression'].data['test'][2][1] = 1.2
-    graph.nodes['Expression'].data['test'][2][2] = 1.3
-    graph.nodes['Expression'].data['test'][2][3] = 1.4
+    # 그래프 생성
+    ###################################################################################################################
 
-    graph.nodes['Expression'].data['test'][10][0] = 1.95
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    #
+    # graph.nodes['Expression'].data['test'] = th.ones(graph.num_nodes('Expression'), 6)
+    #
+    # graph.nodes['Expression'].data['test'][2][0] = 1.1
+    # graph.nodes['Expression'].data['test'][2][1] = 1.2
+    # graph.nodes['Expression'].data['test'][2][2] = 1.3
+    # graph.nodes['Expression'].data['test'][2][3] = 1.4
+    #
+    # graph.nodes['Expression'].data['test'][10][0] = 1.95
 
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL end ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
 

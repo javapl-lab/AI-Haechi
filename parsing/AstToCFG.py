@@ -299,7 +299,7 @@ def conditional_statement_processing(node, cfg=None):
         # While문 처리부
         elif node_type == 'WhileStatement':
             node_id = node_counter.counter()
-            loopCondition_node = Node("LoopCondition", node_id)
+            loopCondition_node = Node("Condition", node_id)
             (cfg.last_node()).add_successor(loopCondition_node.id)
             cfg.add_node(loopCondition_node)
             traverse(children['condition'], cfg, loopCondition_node)
@@ -332,7 +332,7 @@ def conditional_statement_processing(node, cfg=None):
                 traverse(children['initExpression'], cfg, VariableDeclaration_node)
 
             node_id = node_counter.counter()
-            loopCondition_node = Node("LoopCondition", node_id)
+            loopCondition_node = Node("Condition", node_id)
             (cfg.last_node()).add_successor(loopCondition_node.id)
             cfg.add_node(loopCondition_node)
             traverse(children['conditionExpression'], cfg, loopCondition_node)
