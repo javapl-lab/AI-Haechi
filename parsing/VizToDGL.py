@@ -15,7 +15,7 @@ def viz_to_dgl(viz_code):
     feature_dict = dict()
     feature_list = []
     node_id = 0
-    normalization = open(os.path.abspath('../Graph_generator_for_GNN/result/embedding/Normalization.txt'), 'r').read()
+    normalization = open(os.path.abspath('../result/embedding/Normalization.txt'), 'r').read()
     normalization_dict = eval(normalization)
 
     viz_edges = re.findall(r'\d+ -> \d+', viz_code)
@@ -73,10 +73,10 @@ def viz_to_dgl(viz_code):
         if max_feature_length < len(feature_dict[key]):
             max_feature_length = len(feature_dict[key])
 
-    print('node_dict:', node_dict)
-    print('edge_list:', edge_list)
-    print('feature_dict:', feature_dict)
-    print('max_feature_length:', max_feature_length)
+    # print('node_dict:', node_dict)
+    # print('edge_list:', edge_list)
+    # print('feature_dict:', feature_dict)
+    # print('max_feature_length:', max_feature_length)
 
     ###################################################################################################################
 
@@ -117,16 +117,17 @@ def viz_to_dgl(viz_code):
     ###################################################################################################################
 
     graph.nodes['Expression'].data['expression'] = th.ones(graph.num_nodes('Expression'), max_feature_length)
-
+    graph.nodes['Condition'].data['expression'] = th.ones(graph.num_nodes('Condition'), max_feature_length)
+    graph.nodes['LoopVariable'].data['expression'] = th.ones(graph.num_nodes('LoopVariable'), max_feature_length)
+    graph.nodes['LoopExpression'].data['expression'] = th.ones(graph.num_nodes('LoopExpression'), max_feature_length)
+    graph.nodes['return'].data['expression'] = th.ones(graph.num_nodes('return'), max_feature_length)
 
     for key, values in feature_dict.items():
         for i in range(len(values)):
-            graph.nodes['Expression'].data['expression'][int(key)][i] = values[i]
-
-    print(graph)
+            graph.nodes[node_dict[key]].data['expression'][int(key) - 1][i] = values[i]
 
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL end ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
 
-    
+    return graph
     # expression노드에 특징 삽입
     ###################################################################################################################

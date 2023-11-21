@@ -1,11 +1,11 @@
 import os
-import re
 from Graph_generator_for_GNN.parsing.Generator import generate
+import pickle
 
 
 abs_code_path = os.path.abspath('../embedding/embedding_code')
-abs_result_path = os.path.abspath('../result/embedding')
-tmp = ['unchecked external call']
+abs_result_path = os.path.abspath('../result/dgl_graph')
+tmp = ['block number dependency']
 weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 vocabulary = {}
@@ -18,25 +18,27 @@ fail_file = []
 
 for weakness in tmp:
     folder_path = abs_code_path + '\\' + weakness
+    save_folder_path = abs_result_path + '\\' + weakness
+
     solidity_list = os.listdir(folder_path)
-    result = []
+
     for file_name in solidity_list:
         file_path = folder_path + '\\' + file_name
+        save_file_path = save_folder_path + '\\' + file_name.split('.')[0]
         try:
-            viz_code = generate(file_path, file_name)
+            dgl_graph = generate(file_path, file_name)
 
-            for line in viz_code.split("\n"):
-                for word in line.split(' '):
 
-                    result.append(word)
-                    if word not in vocabulary:
-                        vocabulary[word] = 0
-                    vocabulary[word] += 1
-            preprocessed_sentences.append(result)
+
+
+            with open(save_file_path, 'wb') as f:
+                pickle.dump(dgl_graph, f)
+
+
             success_count += 1
             success_file.append(file_name)
             print('now...', file_name)
-            if success_count == 100:
+            if success_count == 50:
                 break
 
         except Exception as e:
