@@ -322,13 +322,14 @@ def conditional_statement_processing(node, cfg=None):
 
         # For문 처리부
         elif node_type == 'ForStatement':
-            node_id = node_counter.counter()
-            VariableDeclaration_node = Node("LoopVariable", node_id)
-            (cfg.last_node()).add_successor(VariableDeclaration_node.id)
-            cfg.add_node(VariableDeclaration_node)
+
             if children['initExpression'] == None:
                 pass
             else:
+                node_id = node_counter.counter()
+                VariableDeclaration_node = Node("LoopVariable", node_id)
+                (cfg.last_node()).add_successor(VariableDeclaration_node.id)
+                cfg.add_node(VariableDeclaration_node)
                 traverse(children['initExpression'], cfg, VariableDeclaration_node)
 
             node_id = node_counter.counter()

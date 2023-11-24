@@ -12,26 +12,24 @@ def generate(file_path, file_name):
     else:
         abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
 
-    try:
-        if not os.path.exists(abs_result_path):
-            os.mkdir(abs_result_path)
-            os.mkdir(os.path.join(abs_result_path, 'ast'))
-            os.mkdir(os.path.join(abs_result_path, 'cfg'))
-            os.mkdir(os.path.join(abs_result_path, 'preprocessed_ast'))
+    #try:
+    if not os.path.exists(abs_result_path):
+        os.mkdir(abs_result_path)
+        os.mkdir(os.path.join(abs_result_path, 'ast'))
+        os.mkdir(os.path.join(abs_result_path, 'cfg'))
+        os.mkdir(os.path.join(abs_result_path, 'preprocessed_ast'))
 
-        ast = solidity_to_ast(file_path)
-        viz_code = ast_to_cfg(ast)
-        dgl_graph = viz_to_dgl(viz_code)
-        abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
-        #
-        # file_name = file_name.split('.')[0]
-        # cfg = graphviz.Source(viz_code)
-        # cfg.format = 'png'
-        # cfg.render(filename=os.path.join(abs_result_path, 'cfg/', file_name))
+    ast = solidity_to_ast(file_path)
+    viz_code = ast_to_cfg(ast)
+    dgl_graph = viz_to_dgl(viz_code)
+    abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
 
-        return dgl_graph
+    # file_name = file_name.split('.')[0]
+    # cfg = graphviz.Source(viz_code)
+    # cfg.format = 'png'
+    # cfg.render(filename=os.path.join(abs_result_path, 'cfg/', file_name))
 
-    except Exception as e:
-        print(str(e))
+    return dgl_graph
 
-
+    #except Exception as e:
+        #print(str(e))

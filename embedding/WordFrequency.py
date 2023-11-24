@@ -6,7 +6,7 @@ from Graph_generator_for_GNN.parsing.Generator import generate
 abs_code_path = os.path.abspath('../embedding/embedding_code')
 abs_result_path = os.path.abspath('../result/embedding')
 tmp = ['unchecked external call']
-weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen',
+weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 vocabulary = {}
 preprocessed_sentences = []
@@ -16,7 +16,8 @@ fail_count = 0
 success_file = []
 fail_file = []
 
-for weakness in tmp:
+for weakness in weakness_name:
+    print(weakness)
     folder_path = abs_code_path + '\\' + weakness
     solidity_list = os.listdir(folder_path)
     result = []
@@ -36,7 +37,8 @@ for weakness in tmp:
             success_count += 1
             success_file.append(file_name)
             print('now...', file_name)
-            if success_count == 100:
+            if success_count == 80:
+                success_count = 0
                 break
 
         except Exception as e:
@@ -47,14 +49,14 @@ for weakness in tmp:
             continue
 
         print('success:', success_count)
-        print('success:', success_file)
+        # print('success:', success_file)
         print('fail:', fail_count)
-        print('fail:', fail_file)
+        # print('fail:', fail_file)
 
-# vocabulary_sorted = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)
-#
-# integer_encoding = open(abs_result_path + '/WordFrequency.txt', 'w+')
-# integer_encoding.write(str(vocabulary_sorted))
-# integer_encoding.close()
+vocabulary_sorted = sorted(vocabulary.items(), key=lambda x: x[1], reverse=True)
+
+integer_encoding = open(abs_result_path + '/WordFrequency.txt', 'w+')
+integer_encoding.write(str(vocabulary_sorted))
+integer_encoding.close()
 
 print('done')

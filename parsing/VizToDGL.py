@@ -15,7 +15,7 @@ def viz_to_dgl(viz_code):
     feature_dict = dict()
     feature_list = []
     node_id = 0
-    normalization = open(os.path.abspath('../result/embedding/Normalization.txt'), 'r').read()
+    normalization = open(os.path.abspath('../Graph_generator_for_GNN/result/embedding/Normalization.txt'), 'r').read()
     normalization_dict = eval(normalization)
 
     viz_edges = re.findall(r'\d+ -> \d+', viz_code)
@@ -116,15 +116,26 @@ def viz_to_dgl(viz_code):
     # 그래프 생성
     ###################################################################################################################
 
-    graph.nodes['Expression'].data['expression'] = th.ones(graph.num_nodes('Expression'), max_feature_length)
-    graph.nodes['Condition'].data['expression'] = th.ones(graph.num_nodes('Condition'), max_feature_length)
-    graph.nodes['LoopVariable'].data['expression'] = th.ones(graph.num_nodes('LoopVariable'), max_feature_length)
-    graph.nodes['LoopExpression'].data['expression'] = th.ones(graph.num_nodes('LoopExpression'), max_feature_length)
-    graph.nodes['return'].data['expression'] = th.ones(graph.num_nodes('return'), max_feature_length)
+    node_list = list(node_dict.values())
+
+    # if 'Expression' in node_list:
+    #     graph.nodes['Expression'].data['expression'] = th.ones(graph.num_nodes('Expression'), max_feature_length)
+    # if 'Condition' in node_list:
+    #     graph.nodes['Condition'].data['expression'] = th.ones(graph.num_nodes('Condition'), max_feature_length)
+    # if 'LoopVariable' in node_list:
+    #     graph.nodes['LoopVariable'].data['expression'] = th.ones(graph.num_nodes('LoopVariable'), max_feature_length)
+    # if 'LoopExpression' in node_list:
+    #     graph.nodes['LoopExpression'].data['expression'] = th.ones(graph.num_nodes('LoopExpression'), max_feature_length)
+    # if 'return' in node_list:
+    #     graph.nodes['return'].data['expression'] = th.ones(graph.num_nodes('return'), max_feature_length)
 
     for key, values in feature_dict.items():
+        node_name = node_dict[key]
+
+        if 'expression' not in graph.nodes[node_name].data:
+            graph.nodes[node_name].data['expression'] = th.ones(graph.num_nodes(node_name), max_feature_length)
         for i in range(len(values)):
-            graph.nodes[node_dict[key]].data['expression'][int(key) - 1][i] = values[i]
+            graph.nodes[node_name].data['expression'][int(key) - 1][i] = values[i]
 
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL end ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
 
