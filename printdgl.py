@@ -11,6 +11,9 @@ weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether fro
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 
 
+
+
+
 for weakness in weakness_name:
     save_folder_path = abs_result_path + '\\' + weakness
     print(weakness, '--------------------------------------')
@@ -22,6 +25,8 @@ for weakness in weakness_name:
 
         with open(save_file_path,'rb') as f:
             data = pickle.load(f)
+
+
 
         print(file_name, '-------------------------')
         print(data)

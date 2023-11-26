@@ -1,9 +1,10 @@
-import os.path
+import os
 import re
-import dgl
-import torch as th
+import pickle
+from Graph_generator_for_GNN.parsing.AstToCFG import ast_to_cfg
+from Graph_generator_for_GNN.parsing.SolidityToAST import solidity_to_ast
 
-def viz_to_dgl(viz_code):
+def extraction(viz_code):
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
 
     dgl_U, dgl_V = [], []
@@ -66,56 +67,49 @@ def viz_to_dgl(viz_code):
         if max_feature_length < len(feature_dict[key]):
             max_feature_length = len(feature_dict[key])
 
-
-################################################################################################################
-
-    tuple_list = []
-    objects = []
-    class EdgeClass:
-        def __init__(self, edge):
-            self.u_list = []
-            self.v_list = []
-            self.edge = edge
-
-    for u, edge, v in edge_list:
-        if (node_dict[u], edge, node_dict[v]) not in tuple_list:
-            tuple_list.append((node_dict[u], edge, node_dict[v]))
-
-            obj = EdgeClass((node_dict[u], edge, node_dict[v]))
-            objects.append(obj)
-            obj.u_list.append(int(u))
-            obj.v_list.append(int(v))
-        else:
-            for obj in objects:
-                if obj.edge == (node_dict[u], edge, node_dict[v]):
-                    obj.u_list.append(int(u))
-                    obj.v_list.append(int(v))
-
-    # objects 리스트에는 엣지클래스의 객체들이 담겨 있다.
-    # 객체들은 각각 튜플, 그리고 해당 튜플로 이루어진 u,v쌍을 리스트로 지니고 있다.
-    ###################################################################################################################
-
-    graph_data = {}
-
-    for obj in objects:
-        graph_data[obj.edge] = (th.tensor(obj.u_list), th.tensor(obj.v_list))
-
-    graph = dgl.heterograph(graph_data)
-
-    # 그래프 생성
-    ###################################################################################################################
+    return max_feature_length
 
 
-    for key, values in feature_dict.items():
-        node_name = node_dict[key]
 
-        if 'expression' not in graph.nodes[node_name].data:
-            graph.nodes[node_name].data['expression'] = th.ones(graph.num_nodes(node_name), 348)
-        for i in range(len(values)):
-            graph.nodes[node_name].data['expression'][int(key) - 1][i] = values[i]
 
-    print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL end ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
+abs_code_path = os.path.abspath('../Graph_generator_for_GNN/embedding/embedding_code')
+abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/dgl_graph')
+tmp = ['ether frozen']
+weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
+                 'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 
-    return graph
-    # expression노드에 특징 삽입
-    ###################################################################################################################
+counter = 0
+max_length = 0
+
+for weakness in weakness_name:
+    folder_path = abs_code_path + '\\' + weakness
+    save_folder_path = abs_result_path + '\\' + weakness
+    print(weakness)
+
+    solidity_list = os.listdir(folder_path)
+
+    for file_name in solidity_list:
+        file_path = folder_path + '\\' + file_name
+        save_file_path = save_folder_path + '\\' + file_name.split('.')[0]
+
+        try:
+            ast = solidity_to_ast(file_path)
+            viz_code = ast_to_cfg(ast)
+            length = extraction(viz_code)
+            print(length)
+            if length > max_length:
+                max_length = length
+
+            counter += 1
+            if counter > 100:
+                counter = 0
+                break
+
+        except Exception as e:
+            continue
+
+
+
+
+print(max_length)
+print('done')

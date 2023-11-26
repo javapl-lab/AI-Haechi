@@ -25,8 +25,9 @@ success_count = 0
 fail_count = 0
 success_file = []
 fail_file = []
+max = 0
 
-for weakness in tmp:
+for weakness in weakness_name:
     folder_path = abs_code_path + '\\' + weakness
     save_folder_path = abs_result_path + '\\' + weakness
     print(weakness)
