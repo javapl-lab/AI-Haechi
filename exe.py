@@ -1,22 +1,18 @@
 from Graph_generator_for_GNN.parsing.Generator import generate
 import os
 import pickle
-#
-# file_name = '2199.sol'
+
+# file_name = '0.sol'
 #
 # file_path = os.path.abspath('../Graph_generator_for_GNN/embedding/embedding_code/block number dependency/' + file_name)
 # dgl = generate(file_path, file_name)
 #
 # print(dgl)
-#
-# save_file_path = os.path.abspath('../Graph_generator_for_GNN/result/dgl_graph/block number dependency/2199')
-#
-# with open(save_file_path, 'wb') as f:
-#     pickle.dump(dgl, f)
+
 
 
 abs_code_path = os.path.abspath('../Graph_generator_for_GNN/embedding/embedding_code')
-abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/dgl_graph')
+abs_result_path = os.path.abspath('D:/dgl_graph')
 tmp = ['ether frozen']
 weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']

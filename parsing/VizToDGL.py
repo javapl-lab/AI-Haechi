@@ -3,6 +3,11 @@ import re
 import dgl
 import torch as th
 
+node_type_list = ['Block', 'return', 'break', 'Expression', 'throw', 'Condition', 'IfEnd',
+                  'WhileEnd', 'LoopVariable', 'LoopExpression', 'ForEnd', 'Function', 'FunctionEnd']
+need_feature_node_type_list = ['return', 'Expression', 'throw', 'Condition',
+                  'LoopVariable', 'LoopExpression']
+
 def viz_to_dgl(viz_code):
     print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ VizToDGL start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
 
@@ -31,7 +36,7 @@ def viz_to_dgl(viz_code):
                 node_dict[line.split()[0]] = re.sub(r"[^a-zA-Z]", "", line.split()[3])
 
         # feature_dict를 생성
-        if '{' not in line and '[' not in line and '->' not in line:
+        if '{' not in line and '[' not in line and '->' not in line and '}' not in line:
             pattern = re.compile(r'"(.*?);')
             line = re.sub(pattern, '', line)
 
@@ -47,6 +52,21 @@ def viz_to_dgl(viz_code):
                     else:
                         feature_list.append(1)
             feature_dict[node_id] = feature_list
+
+
+    # 노드 타입을 통일 시키기 위한 작업
+    node_number = max(map(int, node_dict.keys())) # 현재 노드의 수
+
+    for node_type in node_type_list:
+        if node_type not in node_dict.values():
+            node_number = str(int(node_number) + 1)
+            node_dict[node_number] = node_type
+            edge_list.append((node_number, 'normal', node_number))
+
+            if node_type in need_feature_node_type_list:
+                feature_dict[node_number]= []
+
+
 
     for line in viz_code:
         # nodedict를 사용해 edge_dict를 생성
@@ -65,6 +85,7 @@ def viz_to_dgl(viz_code):
     for key in feature_dict:
         if max_feature_length < len(feature_dict[key]):
             max_feature_length = len(feature_dict[key])
+
 
 
 ################################################################################################################
@@ -101,6 +122,8 @@ def viz_to_dgl(viz_code):
         graph_data[obj.edge] = (th.tensor(obj.u_list), th.tensor(obj.v_list))
 
     graph = dgl.heterograph(graph_data)
+    print(graph.ntypes)
+    print(graph.canonical_etypes)
 
     # 그래프 생성
     ###################################################################################################################
