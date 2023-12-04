@@ -11,7 +11,7 @@ import pickle
 
 
 abs_result_path = os.path.abspath('D:/dgl_graph')
-tmp = ['block number dependency']
+tmp = ['dangerous delegatecall']
 weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 

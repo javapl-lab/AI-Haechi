@@ -12,21 +12,22 @@ index = 0
 
 # 각 시트의 데이터 출력
 for sheet_name, sheet_data in excel_data.items():
-    print(f"Sheet: {sheet_name} : {number}")
+    if sheet_name == 'block number dependency':
+        print(f"Sheet: {sheet_name} : {number}")
 
 
 
-    for file_value, group in sheet_data.groupby('file'):
-        if any(group['ground truth'] == 1):
-            new_data.loc[index] = [sheet_name, file_value, number]
-        else:
-            new_data.loc[index] = [sheet_name, file_value, 0]
+        for file_value, group in sheet_data.groupby('file'):
+            if any(group['ground truth'] == 1):
+                new_data.loc[index] = [sheet_name, file_value, number]
+            else:
+                new_data.loc[index] = [sheet_name, file_value, 0]
 
-        index += 1
+            index += 1
 
-    number += 1
+        number += 1
 
 # 결과 출력
 print(new_data)
-new_data.to_csv('./learning/output.csv', index=False)
+new_data.to_csv('./learning/output2.csv', index=False)
 

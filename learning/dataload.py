@@ -8,6 +8,7 @@ import torch.nn as nn
 import pandas as pd
 import torch.nn.functional as F
 
+
 class RGCN(nn.Module):
     def __init__(self, in_feats, hid_feats, out_feats, rel_names):
         super().__init__()
@@ -25,6 +26,7 @@ class RGCN(nn.Module):
         h = {k: F.relu(v) for k, v in h.items()}
         h = self.conv2(graph, h)
         return h
+
 
 class HeteroClassifier(nn.Module):
     def __init__(self, in_dim, hidden_dim, n_classes, rel_names):
@@ -47,7 +49,8 @@ class HeteroClassifier(nn.Module):
                     hg = hg + dgl.mean_nodes(g, 'h', ntype=ntype)
 
             return self.classify(hg)
-        
+
+
 class MyCustomDataset(DGLDataset):
     def __init__(self, graph_list, labels):
         self.graph_list = graph_list
@@ -63,7 +66,7 @@ class MyCustomDataset(DGLDataset):
         for i, graph in enumerate(self.graph_list):
             # 메타그래프에서 정의된 노드 타입을 가져옵니다.
             defined_node_types = set(graph.ntypes)
-            
+
             # 그래프의 각 노드 타입을 검사합니다.
             for ntype in graph.ndata['ntype']:
                 if ntype not in defined_node_types:
@@ -79,129 +82,75 @@ class MyCustomDataset(DGLDataset):
         # 데이터셋에 있는 그래프의 총 개수를 반환합니다.
         return len(self.graphs)
 
+
 # Define the path to the 'block number dependency' folder inside 'dgl_graph'
-folder_path_delegate = 'dgl_graph/dangerous delegatecall'
-# folder_path_integer = 'dgl_graph/integer overflow'
-folder_path_timestamp = 'dgl_graph/timestamp dependency'
-folder_path_reentrancy = 'dgl_graph/reentrancy'
+abs_result_path = os.path.abspath('D:/dgl_graph')
+tmp = ['block number dependency']
+weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
+                 'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
+counter = 0
 
-# List to hold the loaded pickle data
-loaded_pickles_delegate = []
-# loaded_pickles_integer = []
-loaded_pickles_timestamp = []
-loaded_pickles_reentrancy = []
+# 라벨 데이터 가져오기
+csv_file_path = 'output2.csv'
+csv_data = pd.read_csv(csv_file_path)
 
-# Check if the folder exists
-# if os.path.exists(folder_path_delegate):
-#     # Iterate through each file in the folder
-#     for filename in os.listdir(folder_path_delegate):
-#         # Check if the file is a pickle file
-#             # Construct the full file path
-#             file_path = os.path.join(folder_path_delegate, filename)
-#             # Open and load the pickle file
-#             with open(file_path, 'rb') as file:
-#                 data = pickle.load(file)
-#                 if data is not None:
-#                     # Append the loaded data to the list
-#                     loaded_pickles_delegate.append(data)
-#                 else:
-#                     print(f"File '{filename}' is None.")
-# else:
-#     print(f"Folder '{folder_path_delegate}' does not exist.")
+# 그래프 데이터 가져오기
+graph_list = []
+for weakness in tmp:
+    save_folder_path = abs_result_path + '\\' + weakness
+    print(weakness, '--------------------------------------')
 
-# #print(loaded_pickles_delegate[:5])
+    folder_data = csv_data[csv_data['folder'] == weakness]
+    ground_truth_list = []
 
-# # Check if integer Overflow
-# # if os.path.exists(folder_path_integer):
-# #     # Iterate through each file in the folder
-# #     for filename in os.listdir(folder_path_integer):
-# #         # Check if the file is a pickle file
-# #             # Construct the full file path
-# #             file_path = os.path.join(folder_path_integer, filename)
-# #             # Open and load the pickle file
-# #             with open(file_path, 'rb') as file:
-# #                 data = pickle.load(file)
-# #                 # Append the loaded data to the list
-# #                 loaded_pickles_integer.append(data)
-# # else:
-# #     print(f"Folder '{folder_path_integer}' does not exist.")
 
-# # print(loaded_pickles_integer[:5])
+    dgl_list = os.listdir(save_folder_path)
+    for file_name in dgl_list:
+        save_file_path = save_folder_path + '\\' + file_name
 
-# Check if timestamp
-# if os.path.exists(folder_path_timestamp):
-#     # Iterate through each file in the folder
-#     for filename in os.listdir(folder_path_timestamp):
-#         # Check if the file is a pickle file
-#             # Construct the full file path
-#             file_path = os.path.join(folder_path_timestamp, filename)
-#             # Open and load the pickle file
-#             with open(file_path, 'rb') as file:
-#                 data = pickle.load(file)
-#                 # Append the loaded data to the list
-#                 if data is not None:
-#                     # Append the loaded data to the list
-#                     loaded_pickles_delegate.append(data)
-#                 else:
-#                     print(f"File '{filename}' is None.")
-# else:
-#     print(f"Folder '{folder_path_timestamp}' does not exist.")
+        with open(save_file_path,'rb') as f:
+            data = pickle.load(f)
+            if data is None:
+                pass
+            else:
+                # 리스트에 그래프 추가
+                graph_list.append(data)
 
-#print(loaded_pickles_timestamp[:5])
+                # 리스트에 보안약점 여부 추가
+                counter+=1
+                print('---------------', counter)
 
-# Check if reentrancy
-# if os.path.exists(folder_path_reentrancy):
-#     # Iterate through each file in the folder
-#     for filename in os.listdir(folder_path_reentrancy):
-#         # Check if the file is a pickle file
-#             # Construct the full file path
-#             file_path = os.path.join(folder_path_reentrancy, filename)
-#             # Open and load the pickle file
-#             with open(file_path, 'rb') as file:
-#                 data = pickle.load(file)
-#                 if data is not None:
-#                     # Append the loaded data to the list
-#                     loaded_pickles_delegate.append(data)
-#                 else:
-#                     print(f"File '{filename}' is None.")
-# else:
-#     print(f"Folder '{folder_path_reentrancy}' does not exist.")
+                ground_truth = folder_data[folder_data['file'] == int(file_name)]['ground truth'].tolist()[0]
+                ground_truth_list.append(ground_truth)
+                print(file_name, ', ', ground_truth)
 
-# #print(loaded_pickles_reentrancy[:5])
 
-file_path1 = 'dgl_graph/dangerous delegatecall/510'
-file_path2 = 'dgl_graph/dangerous delegatecall/1517'
 
-# pickle 파일로부터 그래프 객체 로드
-with open(file_path1, 'rb') as f:
-    graph_510 = pickle.load(f)
-
-with open(file_path2, 'rb') as f:
-    graph_1517 = pickle.load(f)
-
-total_data =[graph_510, graph_510]
+total_data = graph_list
+labels = ground_truth_list
 
 print(len(total_data))
 
-df_labels = pd.read_csv('combined_ground_truth.csv')
-labels = [1,1]
+# df_labels = pd.read_csv('combined_ground_truth.csv')
+# labels = df_labels['label'].tolist()
 print(len(labels))
 
 dataset = MyCustomDataset(total_data, labels)
 
 from dgl.dataloading import GraphDataLoader
+
 dataloader = GraphDataLoader(
     dataset,
     batch_size=1,
     drop_last=False,
     shuffle=True)
 
-for i, (batched_graph, labels) in enumerate(dataloader):
-    print(f"배치 {i}:")
-    print(f"  노드 수: {batched_graph.number_of_nodes()}")
-    print(f"  엣지 수: {batched_graph.number_of_edges()}")
-    print(f"  노드 타입: {batched_graph.ntypes}")
-    print(f"  엣지 타입: {batched_graph.etypes}")
+# for i, (batched_graph, labels) in enumerate(dataloader):
+#     print(f"배치 {i}:")
+#     print(f"  노드 수: {batched_graph.number_of_nodes()}")
+#     print(f"  엣지 수: {batched_graph.number_of_edges()}")
+#     print(f"  노드 타입: {batched_graph.ntypes}")
+#     print(f"  엣지 타입: {batched_graph.etypes}")
 
 etypes = ['normal', 'false', 'true']
 model = HeteroClassifier(342, 20, 2, etypes)
