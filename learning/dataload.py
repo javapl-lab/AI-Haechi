@@ -7,6 +7,7 @@ import dgl.nn.pytorch as dglnn
 import torch.nn as nn
 import pandas as pd
 import torch.nn.functional as F
+from torch.utils.data import SubsetRandomSampler
 
 
 class RGCN(nn.Module):
@@ -85,18 +86,20 @@ class MyCustomDataset(DGLDataset):
 
 # Define the path to the 'block number dependency' folder inside 'dgl_graph'
 abs_result_path = os.path.abspath('D:/dgl_graph')
-tmp = ['block number dependency']
+tmp = ['ether strict equality']
 weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 counter = 0
 
-# 라벨 데이터 가져오기
-csv_file_path = 'output2.csv'
-csv_data = pd.read_csv(csv_file_path)
 
 # 그래프 데이터 가져오기
 graph_list = []
 for weakness in tmp:
+
+    # 라벨 데이터 가져오기
+    csv_file_path = f'output_{weakness}.csv'
+    csv_data = pd.read_csv(csv_file_path)
+
     save_folder_path = abs_result_path + '\\' + weakness
     print(weakness, '--------------------------------------')
 
@@ -112,6 +115,9 @@ for weakness in tmp:
             data = pickle.load(f)
             if data is None:
                 pass
+            elif int(file_name) not in folder_data['file'].values: # dgl 그래프는 있는데 해당 그래프에 대한 라벨이 존재하지 않는 경우가 있다.
+                print(f"File {file_name} not found in folder_data. Skipping.")
+                #pass
             else:
                 # 리스트에 그래프 추가
                 graph_list.append(data)
@@ -119,10 +125,11 @@ for weakness in tmp:
                 # 리스트에 보안약점 여부 추가
                 counter+=1
                 print('---------------', counter)
-
+                print(file_name)
                 ground_truth = folder_data[folder_data['file'] == int(file_name)]['ground truth'].tolist()[0]
                 ground_truth_list.append(ground_truth)
-                print(file_name, ', ', ground_truth)
+                print(ground_truth)
+
 
 
 
@@ -139,28 +146,37 @@ dataset = MyCustomDataset(total_data, labels)
 
 from dgl.dataloading import GraphDataLoader
 
-dataloader = GraphDataLoader(
-    dataset,
-    batch_size=1,
-    drop_last=False,
-    shuffle=True)
+num_examples = len(dataset)
+num_train = int(num_examples * 0.8)
 
-# for i, (batched_graph, labels) in enumerate(dataloader):
-#     print(f"배치 {i}:")
-#     print(f"  노드 수: {batched_graph.number_of_nodes()}")
-#     print(f"  엣지 수: {batched_graph.number_of_edges()}")
-#     print(f"  노드 타입: {batched_graph.ntypes}")
-#     print(f"  엣지 타입: {batched_graph.etypes}")
+train_sampler = SubsetRandomSampler(torch.arange(num_train))
+test_sampler = SubsetRandomSampler(torch.arange(num_train, num_examples))
+
+train_dataloader = GraphDataLoader(
+    dataset, sampler=train_sampler, batch_size=1, drop_last=False)
+test_dataloader = GraphDataLoader(
+    dataset, sampler=test_sampler, batch_size=1, drop_last=False)
 
 etypes = ['normal', 'false', 'true']
 model = HeteroClassifier(342, 20, 2, etypes)
 
 opt = torch.optim.Adam(model.parameters())
 for epoch in range(20):
-    for batched_graph, labels in dataloader:
+    for batched_graph, labels in train_dataloader:
         logits = model(batched_graph)
         loss = F.cross_entropy(logits, labels)
         opt.zero_grad()
         loss.backward()
         opt.step()
         print('ok')
+
+
+num_correct = 0
+num_tests = 0
+
+for batched_graph, labels in test_dataloader:
+    pred = model(batched_graph)
+    num_correct += (pred.argmax(1) == labels).sum().item()
+    num_tests += len(labels)
+
+print(f'{tmp[0]} accuracy:', num_correct / num_tests)

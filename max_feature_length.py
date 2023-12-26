@@ -100,10 +100,10 @@ for weakness in weakness_name:
             if length > max_length:
                 max_length = length
 
-            counter += 1
-            if counter > 100:
-                counter = 0
-                break
+            # counter += 1
+            # if counter > 100:
+            #     counter = 0
+            #     break
 
         except Exception as e:
             continue
