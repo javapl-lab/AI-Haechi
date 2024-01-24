@@ -13,7 +13,7 @@ import pickle
 
 abs_code_path = os.path.abspath('../Graph_generator_for_GNN/embedding/embedding_code')
 abs_result_path = os.path.abspath('D:/dgl_graph')
-tmp = ['ether frozen']
+tmp = ['dangerous delegatecall']
 weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 
@@ -23,7 +23,7 @@ success_file = []
 fail_file = []
 max = 0
 
-for weakness in weakness_name:
+for weakness in tmp:
     folder_path = abs_code_path + '\\' + weakness
     save_folder_path = abs_result_path + '\\' + weakness
     print(weakness)
@@ -44,9 +44,9 @@ for weakness in weakness_name:
             success_count += 1
             success_file.append(file_name)
             print('now...', file_name)
-            if success_count == 100:
-                success_count = 0
-                break
+            # if success_count == 100:
+            #     success_count = 0
+            #     break
 
         except Exception as e:
             fail_count += 1

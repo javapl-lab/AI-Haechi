@@ -87,26 +87,28 @@ for weakness in weakness_name:
     print(weakness)
 
     solidity_list = os.listdir(folder_path)
-
+    count = 0
     for file_name in solidity_list:
         file_path = folder_path + '\\' + file_name
         save_file_path = save_folder_path + '\\' + file_name.split('.')[0]
 
-        try:
-            ast = solidity_to_ast(file_path)
-            viz_code = ast_to_cfg(ast)
-            length = extraction(viz_code)
-            print(length)
-            if length > max_length:
-                max_length = length
+        count+=1
+    print(count)
+        # try:
+        #     ast = solidity_to_ast(file_path)
+        #     viz_code = ast_to_cfg(ast)
+        #     length = extraction(viz_code)
+        #     print(length)
+        #     if length > max_length:
+        #         max_length = length
 
             # counter += 1
             # if counter > 100:
             #     counter = 0
             #     break
-
-        except Exception as e:
-            continue
+        #
+        # except Exception as e:
+        #     continue
 
 
 

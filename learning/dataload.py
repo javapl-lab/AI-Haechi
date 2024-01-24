@@ -86,7 +86,7 @@ class MyCustomDataset(DGLDataset):
 
 # Define the path to the 'block number dependency' folder inside 'dgl_graph'
 abs_result_path = os.path.abspath('D:/dgl_graph')
-tmp = ['ether strict equality']
+tmp = ['block number dependency']
 weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 counter = 0
