@@ -55,7 +55,8 @@ def create_feature(node):
             #     function_dict[name] = str(function_counter.counter())
 
             if name in function_dict:
-                feature += "function" + function_dict[name] + ' ( '
+                #feature += "function" + function_dict[name] + ' ( ' ##########################################################
+                feature += name + ' ( '
             else:
                 feature += name + ' ( '
 
@@ -149,23 +150,28 @@ def create_feature(node):
                 if value == 'None':
                     feature += 'None'
                 elif value in state_variable_dict:
-                    feature += "state_variable" + state_variable_dict[value]
+                    #feature += "state_variable" + state_variable_dict[value] ##########################################################
+                    feature += value
                 elif value  in variable_dict:
-                    feature += "variable" + variable_dict[value]
+                    #feature += "variable" + variable_dict[value] ##########################################################
+                    feature += value
                 else:
                     variable_dict[value] = str(variable_counter.counter())
-                    feature += "variable" + variable_dict[value]
+                    #feature += "variable" + variable_dict[value] ##########################################################
+                    feature += value
             elif key == 'number':
                 if '.' in value:
-                    feature += 'decimal'
+                    #feature += 'decimal' ##########################################################
+                    feature += value
                 else:
-                    feature += 'integer'
+                    #feature += 'integer' ##########################################################
+                    feature += value
             elif key == 'operator':
                 feature += value
             elif key == 'visibility':
                 feature += value
             elif key == 'value':
-                feature += 'string'
+                feature += 'string' ##########################################################
         elif isinstance(value, bool):
             if key == 'value':
                 if value == True:
@@ -174,6 +180,59 @@ def create_feature(node):
                     feature += 'False'
 
     return feature
+
+
+def processing_assembly_line(node):
+    node_type = node['type']
+    assembly_feature = ""
+
+    if node_type == 'AssemblyLocalDefinition':
+        if node['names'][0]['name'] not in variable_dict:
+            variable_dict[node['names'][0]['name']] = str(variable_counter.counter())
+        # assembly_feature += node['names'][0]['name'] + ' = ' ################################ 변수는 여기서 선언하는 거라서 딕셔너리에 추가해서 사용한다
+        assembly_feature += 'variable' + variable_dict[node['names'][0]['name']] + ' = '
+        assembly_feature += processing_assembly_line(node['expression'])
+    elif node_type == 'AssemblyExpression':
+        if node['functionName'] in function_dict:
+            assembly_feature += 'function' + function_dict[node['functionName']] + ' ( '
+        else:
+            assembly_feature += node['functionName'] + ' ( ' ################################ 함수는 기존에 있는 것 가져오는 경우 밖에 없으므로 추가 작업 x
+
+        length = len(node['arguments'])
+        for i in range(length):
+            if i == 0:
+                assembly_feature += processing_assembly_line(node['arguments'][i])
+            else:
+                assembly_feature += ' , ' + processing_assembly_line(node['arguments'][i])
+        assembly_feature += ' ) '
+    elif node_type == 'DecimalNumber' or node_type == 'HexNumber':
+        assembly_feature += 'integer'
+        # assembly_feature += node['value'] ################################
+    elif node_type == 'AssemblyIf':
+        assembly_feature += 'if ( ' + processing_assembly_line(node['condition'])
+        assembly_feature += ' ) { ' + processing_assembly_line(node['body']['operations'][0])  + ' } '
+    elif node_type == 'AssemblySwitch':
+        assembly_feature += 'switch ' + 'variable' + variable_dict[node['expression']['functionName']] + ' { '################################
+        for case in node['cases']:
+            if 'value' in case:
+                assembly_feature += ('case ' + case['value']['value'] + ' { ' +
+                                     processing_assembly_line(case['block']['operations'][0])) + ' } '
+            else:
+                assembly_feature += 'default { ' + processing_assembly_line(case['block']['operations'][0]) + ' } '
+        assembly_feature += ' } '
+
+    return assembly_feature
+
+
+def processing_assembly_block(node):
+
+    assembly_feature = ""
+
+    for children in node['body']['operations']:
+        assembly_feature += '\n' + processing_assembly_line(children)
+
+    return assembly_feature
+
 
 
 def conditional_statement_processing(node, cfg=None):
@@ -196,6 +255,20 @@ def conditional_statement_processing(node, cfg=None):
 
         node_type = children['type']
         last_node = cfg.last_node()
+
+        # 어셈블리 처리
+        if node_type == 'InLineAssemblyStatement':
+            if last_node.name == 'Expression':
+                cfg.last_node().feature.append(processing_assembly_block(children))
+            else:
+                node_id = node_counter.counter()
+                expression_node = Node("Expression", node_id)
+
+                (cfg.last_node()).add_successor(expression_node.id)
+                cfg.add_node(expression_node)
+
+                cfg.last_node().feature.append(processing_assembly_block(children))
+
 
         # 정의 처리부
         if node_type == 'ExpressionStatement':
@@ -412,7 +485,8 @@ def traverse(node, cfg=None, prev_node=None):
         return
     # 연산자 + 단순 식별자(condition 단일값) + 점 연산자 + 배열
     elif (node_type == 'BinaryOperation' or node_type == 'UnaryOperation'
-          or node_type == 'Identifier' or node_type == 'MemberAccess' or node_type == 'IndexAccess'):
+          or node_type == 'Identifier' or node_type == 'MemberAccess' or node_type == 'IndexAccess'
+          or node_type == 'TupleExpression' or node_type == 'BooleanLiteral' or node_type == 'NumberLiteral'):
         prev_node.feature.append("\n" + create_feature(node))
 
         return

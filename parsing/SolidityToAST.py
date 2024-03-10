@@ -4,11 +4,6 @@ import re
 
 
 def solidity_to_ast(file_path):
-    abs_result_path = os.path.abspath('../')
-    if 'Graph_generator_for_GNN' in abs_result_path:
-        abs_result_path = os.path.abspath('../result/')
-    else:
-        abs_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
 
     #print(' ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ SolidityToAST start ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ ')
     try:

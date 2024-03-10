@@ -26,12 +26,12 @@ fail = 0
 
 
 abs_result_path = os.path.abspath('D:/dgl_graph')
-tmp = ['block number dependency']
+tmp = ['dangerous delegatecall']
 weakness_name = ['block number dependency', 'dangerous delegatecall', 'ether frozen', 'ether strict equality',
                  'integer overflow', 'reentrancy', 'timestamp dependency', 'unchecked external call']
 
 
-for weakness in weakness_name:
+for weakness in tmp:
     save_folder_path = abs_result_path + '\\' + weakness
     print(weakness, '--------------------')
 
@@ -42,17 +42,22 @@ for weakness in weakness_name:
         print(file + '.sol --------------------------------------')
 
         with open(save_file_path,'rb') as f:
-            data = pickle.load(f)
+            g = pickle.load(f)
+            #
+            # #그래프의 노드 수를 반환
+            # num_nodes = g.num_nodes()
+            # print(f"Number of nodes: {num_nodes}")
+            #
+            # # 그래프의 엣지 수를 반환
+            # num_edges = g.num_edges()
+            # print(f"Number of edges: {num_edges}")
 
-            #그래프의 노드 수를 반환
-            num_nodes = data.num_nodes()
-            print(f"Number of nodes: {num_nodes}")
+            print(g.ntypes)
+            print(g.ntypes)
+            print(g.ndata)
 
-            # 그래프의 엣지 수를 반환
-            num_edges = data.num_edges()
-            print(f"Number of edges: {num_edges}")
 
             # 그래프 전체 반환
-            print(data)
+            #print(g)
 
             print('\n\n\n')
