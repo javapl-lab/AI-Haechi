@@ -1,3 +1,4 @@
-# graph generate for GNN
+# AI Haechi
 
-솔리디티 코드를 GNN을 통해 학습하기 위한 CFG 생성기입니다.
+AI 해치는 GNN을 활용해 취약한 코드를 학습하고 스마트 컨트랙트에서 보안 취약점을 찾아냅니다.
+
