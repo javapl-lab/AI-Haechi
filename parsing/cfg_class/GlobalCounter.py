@@ -5,3 +5,6 @@ class GlobalCounter:
     def counter(self):
         self.num += 1
         return self.num
+
+    def now(self):
+        return self.num

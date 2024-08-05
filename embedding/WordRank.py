@@ -1,25 +1,27 @@
 import ast
-import os
 
-filename = 'IntegerEncoding.txt'
-abstract_result_path = os.path.abspath('../result/')
+def word_rank(file_path, result_path):
+    WordFrequncy = open(file_path + '/WordFrequency.txt', 'r').read()
+    WordFrequncy = ast.literal_eval(WordFrequncy)
+    
+    max_token_rank = 1000
+    # 대체할 단어의 빈도수를 임의로 설정
+    oov_frequncy = 5
+    
+    word_rank_dict = {}
+    rank = 1
+    for word, frequncy in WordFrequncy:
+        word_rank_dict[word] = [rank, frequncy]
+        rank += 1
+        
+        if rank == max_token_rank:
+            break
+            
 
-integer_encoding = open(abstract_result_path + 'embedding/' + filename, 'r').read()
-integer_encoding = ast.literal_eval(integer_encoding)
-print(integer_encoding)
+    word_rank_dict['OOV'] = [max_token_rank, oov_frequncy]
 
-
-word_to_index = {}
-i = 1
-for word, frequency in integer_encoding:
-    if frequency > 20:
-        word_to_index[word] = i
-        i += 1
-
-word_to_index['OOV'] = len(word_to_index) + 1
-print(word_to_index)
-
-integer_index_encoding = open(abstract_result_path + 'embedding/' + 'integer_index_encoding_result', 'w+')
-integer_index_encoding.write(str(word_to_index))
-integer_index_encoding.close()
-
+    WordRank = open(result_path + '/WordRank.txt', 'w+')
+    WordRank.write(str(word_rank_dict))
+    WordRank.close()
+    
+    return word_rank_dict

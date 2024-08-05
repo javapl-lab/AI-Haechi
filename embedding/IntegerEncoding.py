@@ -1,30 +1,24 @@
 import WordRank
-import os
 
-filename = 'for_code'
-abstract_result_path = os.path.abspath('../Graph_generator_for_GNN/result/')
+index_file = WordRank.zero_to_one
 
-cfg_file = open(abstract_result_path + 'cfg_img/' + filename, 'r').read().split('  ')
-index_file = WordRank.word_to_index
+# 특징부 추출
+for token in index_file.split('\n'):
+    # 전체 cfg에서 특징부만 걸러냄
+    if (token.find("[label") == -1 and token.find("->") == -1 and
+            token.find("->") == -1 and token.find("digraph G {") == -1 and
+            token.find("node[shape=box, style=rounded") == -1) and str.find("}") == -1:
+        # 불필요한 부분 제거
+        token = token.replace('"];', '')
+        token = token.replace('", shape = diamond];', '')
+        print(token)
 
-for empty in cfg_file:
-    if empty == '':
-        cfg_file.remove(empty)
+        # 치환 작업
+        token_list = token.split(" ")
+        feature_list = []
 
-print('cfg_file:', cfg_file)
+        for feature in token_list:
+            number = WordRank.zero_to_one[feature]
+            feature_list.append(number)
 
-encoded_sentences = []
-for word in cfg_file:
-    encoded_sentence = []
-    try:
-        encoded_sentence.append(index_file[word])
-    except KeyError:
-        encoded_sentence.append(index_file['OOV'])
-    encoded_sentences.append(encoded_sentence)
-
-
-target_file_path = r'C:\Users\wlfkr\Desktop\encoded_solidity.result'
-result = open(target_file_path + '.result', 'w+')
-result.write(str(encoded_sentences))
-result.close()
-print('done')
+        print(feature_list)
