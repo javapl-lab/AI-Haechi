@@ -1,5 +1,11 @@
 result/
 embedding/embedding_code/
+__pycahce__/
 .idea/
 *.txt
 *.sol
+*.pyc
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
